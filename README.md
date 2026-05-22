@@ -599,9 +599,7 @@ Documenting what we *don't* do is part of the academic deliverable.
 │   │   ├── reviews/route.ts
 │   │   ├── my-jobs/route.ts
 │   │   ├── categories/route.ts
-│   │   ├── webhooks/clerk/route.ts   # Svix-verified Observer source
-│   │   ├── test/route.ts             # health probes
-│   │   └── test-db/route.ts
+│   │   └── webhooks/clerk/route.ts   # Svix-verified Observer source
 │   ├── (public pages)/page.tsx       # /, /about, /browse-jobs, /freelancers, …
 │   ├── (auth pages)/                 # /sign-in, /sign-up (Clerk catch-all)
 │   ├── (protected)/                  # /dashboard, /post-job, /my-jobs, /my-proposals

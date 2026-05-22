@@ -166,7 +166,7 @@ The user-facing mission is well known. The engineering question this submission 
 │    /api/freelancers     /api/freelancers/[id]                            │
 │    /api/profile         /api/my-jobs         /api/proposals              │
 │    /api/proposals/[id]  /api/reviews         /api/categories             │
-│    /api/webhooks/clerk  /api/test  /api/test-db                          │
+│    /api/webhooks/clerk                                                   │
 └──────────────────────────────────────────────────────────────────────────┘
                                    │
                                    ▼
@@ -824,7 +824,6 @@ The homepage is built on an "editorial-brutalist with cinematic motion" directio
 | `/api/my-jobs` | GET | unauth | 401 | 401 ✓ |
 | `/api/proposals` | GET | unauth | 401 | 401 ✓ |
 | `/api/reviews` | GET (no params) | none | 400 | 400 ✓ |
-| `/api/test` / `/api/test-db` | GET | none | 200 health | 200 |
 
 ### 12.3 Unit-test scaffold (drop into `tests/MatchingStrategy.test.ts`)
 
