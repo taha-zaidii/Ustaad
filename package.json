@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:integration": "USTAAD_RUN_INTEGRATION=1 jest __tests__/integration",
+    "db:seed": "node scripts/seed-demo-data.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.4",
@@ -68,6 +73,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/pg": "^8.15.6",
     "@types/react": "^19",
@@ -75,7 +81,9 @@
     "baseline-browser-mapping": "^2.10.27",
     "eslint": "^9",
     "eslint-config-next": "^16.1.6",
+    "jest": "^30.3.0",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.9",
     "typescript": "^5"
   }
 }
