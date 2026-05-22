@@ -22,12 +22,29 @@ import {
 import Link from "next/link";
 import { ArrowRight, Briefcase, DollarSign, MapPin, Clock } from "lucide-react";
 
+type FieldErrors = Partial<Record<
+  | "title"
+  | "category"
+  | "description"
+  | "budgetMin"
+  | "budgetMax"
+  | "location"
+  | "duration",
+  string
+>>;
+
+const TITLE_MIN = 10;
+const DESC_MIN = 50;
+const DESC_MAX = 2000;
+const BUDGET_MAX = 10_000_000; // PKR 1 crore — cap to prevent typos
+
 export default function PostJobPage() {
   const router = useRouter();
   const { isSignedIn, userId, isLoaded } = useAuth();
   const { user } = useUser();
   const [loading, setLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -39,6 +56,31 @@ export default function PostJobPage() {
     duration: "",
     skillsRequired: "",
   });
+
+  const validate = (data: typeof formData): FieldErrors => {
+    const e: FieldErrors = {};
+    if (data.title.trim().length < TITLE_MIN)
+      e.title = `Title needs at least ${TITLE_MIN} characters.`;
+    if (!data.category) e.category = "Please pick a category.";
+    if (data.description.trim().length < DESC_MIN)
+      e.description = `Add at least ${DESC_MIN} characters of detail.`;
+    if (data.description.length > DESC_MAX)
+      e.description = `Keep the description under ${DESC_MAX} characters.`;
+    const bmin = Number(data.budgetMin);
+    const bmax = Number(data.budgetMax);
+    if (!data.budgetMin || isNaN(bmin) || bmin <= 0)
+      e.budgetMin = "Enter a positive minimum budget.";
+    if (!data.budgetMax || isNaN(bmax) || bmax <= 0)
+      e.budgetMax = "Enter a positive maximum budget.";
+    if (!e.budgetMin && !e.budgetMax) {
+      if (bmin > bmax) e.budgetMax = "Maximum must be at least the minimum.";
+      if (bmax > BUDGET_MAX)
+        e.budgetMax = `Maximum cannot exceed PKR ${BUDGET_MAX.toLocaleString()}.`;
+    }
+    if (!data.location) e.location = "Pick a location.";
+    if (!data.duration) e.duration = "Pick an expected duration.";
+    return e;
+  };
 
   useEffect(() => {
     if (isLoaded) {
@@ -56,7 +98,7 @@ export default function PostJobPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isSignedIn) {
       toast({
         title: "Authentication Required",
@@ -67,8 +109,23 @@ export default function PostJobPage() {
       return;
     }
 
+    const fieldErrors = validate(formData);
+    setErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) {
+      const first = Object.keys(fieldErrors)[0];
+      const el = document.getElementById(first);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.focus();
+      toast({
+        title: "Please fix the highlighted fields",
+        description: Object.values(fieldErrors)[0],
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
-    
+
     try {
       const response = await fetch('/api/jobs/create', {
         method: 'POST',
@@ -106,7 +163,15 @@ export default function PostJobPage() {
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => {
+      if (!prev[field as keyof FieldErrors]) return prev;
+      const next = { ...prev };
+      delete next[field as keyof FieldErrors];
+      return next;
+    });
   };
+
+  const fieldError = (field: keyof FieldErrors) => errors[field];
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,18 +196,30 @@ export default function PostJobPage() {
                   Kaam ka Naam *
                 </Label>
                 <div className="relative group">
-                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:scale-110" />
+                  <Briefcase
+                    aria-hidden="true"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:scale-110"
+                  />
                   <Input
                     id="title"
                     type="text"
                     placeholder="e.g., Fix Water Leakage in Kitchen Sink"
-                    className="pl-10"
+                    className={`pl-10 ${fieldError("title") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     value={formData.title}
                     onChange={(e) => handleChange("title", e.target.value)}
+                    aria-invalid={!!fieldError("title")}
+                    aria-describedby={fieldError("title") ? "title-error" : "title-hint"}
+                    maxLength={120}
                     required
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">Clear aur seedha title likho</p>
+                {fieldError("title") ? (
+                  <p id="title-error" className="text-sm text-destructive">{fieldError("title")}</p>
+                ) : (
+                  <p id="title-hint" className="text-sm text-muted-foreground">
+                    Clear aur seedha title likho ({formData.title.length}/120)
+                  </p>
+                )}
               </div>
 
               {/* Category */}
@@ -155,7 +232,11 @@ export default function PostJobPage() {
                   onValueChange={(value) => handleChange("category", value)}
                   required
                 >
-                  <SelectTrigger>
+                  <SelectTrigger
+                    id="category"
+                    aria-invalid={!!fieldError("category")}
+                    className={fieldError("category") ? "border-destructive focus-visible:ring-destructive" : ""}
+                  >
                     <SelectValue placeholder="Select a service category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -163,7 +244,7 @@ export default function PostJobPage() {
                     <SelectItem value="carpentry">🪚 Carpentry</SelectItem>
                     <SelectItem value="electrician">⚡ Electrician</SelectItem>
                     <SelectItem value="painting">🎨 Painting</SelectItem>
-                    <SelectItem value="ac-refrigeration">❄️ AC & Refrigeration</SelectItem>
+                    <SelectItem value="ac-refrigeration">❄️ AC &amp; Refrigeration</SelectItem>
                     <SelectItem value="construction">🏗️ Construction</SelectItem>
                     <SelectItem value="cleaning">🧹 Cleaning</SelectItem>
                     <SelectItem value="gardening">🌱 Gardening</SelectItem>
@@ -173,6 +254,9 @@ export default function PostJobPage() {
                     <SelectItem value="home-appliances">🔌 Home Appliances</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldError("category") && (
+                  <p className="text-sm text-destructive">{fieldError("category")}</p>
+                )}
               </div>
 
               {/* Description */}
@@ -183,14 +267,27 @@ export default function PostJobPage() {
                 <Textarea
                   id="description"
                   placeholder="Describe your job in detail. Example: I need a plumber to fix water leakage in kitchen sink. The tap is dripping constantly and needs replacement. Please bring necessary tools and parts."
-                  className="min-h-[150px]"
+                  className={`min-h-[150px] ${fieldError("description") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   value={formData.description}
                   onChange={(e) => handleChange("description", e.target.value)}
+                  aria-invalid={!!fieldError("description")}
+                  aria-describedby={fieldError("description") ? "description-error" : "description-hint"}
+                  maxLength={DESC_MAX}
                   required
                 />
-                <p className="text-sm text-muted-foreground">
-                  Minimum 50 characters. Be specific about what you need.
-                </p>
+                {fieldError("description") ? (
+                  <p id="description-error" className="text-sm text-destructive">
+                    {fieldError("description")}
+                  </p>
+                ) : (
+                  <p id="description-hint" className="text-sm text-muted-foreground">
+                    Minimum {DESC_MIN} characters. Be specific about what you need.
+                    {" "}
+                    <span className={formData.description.length >= DESC_MIN ? "text-emerald-600 dark:text-emerald-500" : "text-muted-foreground"}>
+                      ({formData.description.length}/{DESC_MAX})
+                    </span>
+                  </p>
+                )}
               </div>
 
               {/* Budget */}
@@ -218,17 +315,29 @@ export default function PostJobPage() {
                     Min Budget (PKR) *
                   </Label>
                   <div className="relative group">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:scale-110" />
+                    <DollarSign
+                      aria-hidden="true"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:scale-110"
+                    />
                     <Input
                       id="budgetMin"
                       type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={BUDGET_MAX}
+                      step={100}
                       placeholder="e.g., 2000"
-                      className="pl-10"
+                      className={`pl-10 ${fieldError("budgetMin") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                       value={formData.budgetMin}
                       onChange={(e) => handleChange("budgetMin", e.target.value)}
+                      aria-invalid={!!fieldError("budgetMin")}
+                      aria-describedby={fieldError("budgetMin") ? "budgetMin-error" : undefined}
                       required
                     />
                   </div>
+                  {fieldError("budgetMin") && (
+                    <p id="budgetMin-error" className="text-sm text-destructive">{fieldError("budgetMin")}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -236,17 +345,29 @@ export default function PostJobPage() {
                     Max Budget (PKR) *
                   </Label>
                   <div className="relative group">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:scale-110" />
+                    <DollarSign
+                      aria-hidden="true"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:scale-110"
+                    />
                     <Input
                       id="budgetMax"
                       type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={BUDGET_MAX}
+                      step={100}
                       placeholder="e.g., 5000"
-                      className="pl-10"
+                      className={`pl-10 ${fieldError("budgetMax") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                       value={formData.budgetMax}
                       onChange={(e) => handleChange("budgetMax", e.target.value)}
+                      aria-invalid={!!fieldError("budgetMax")}
+                      aria-describedby={fieldError("budgetMax") ? "budgetMax-error" : undefined}
                       required
                     />
                   </div>
+                  {fieldError("budgetMax") && (
+                    <p id="budgetMax-error" className="text-sm text-destructive">{fieldError("budgetMax")}</p>
+                  )}
                 </div>
               </div>
 
@@ -257,13 +378,17 @@ export default function PostJobPage() {
                     Location *
                   </Label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:scale-110" />
+                    <MapPin aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10 pointer-events-none" />
                     <Select
                       value={formData.location}
                       onValueChange={(value) => handleChange("location", value)}
                       required
                     >
-                      <SelectTrigger className="pl-10">
+                      <SelectTrigger
+                        id="location"
+                        aria-invalid={!!fieldError("location")}
+                        className={`pl-10 ${fieldError("location") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      >
                         <SelectValue placeholder="Select location" />
                       </SelectTrigger>
                       <SelectContent>
@@ -279,6 +404,9 @@ export default function PostJobPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {fieldError("location") && (
+                    <p className="text-sm text-destructive">{fieldError("location")}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -286,13 +414,17 @@ export default function PostJobPage() {
                     Project Duration *
                   </Label>
                   <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:scale-110" />
+                    <Clock aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10 pointer-events-none" />
                     <Select
                       value={formData.duration}
                       onValueChange={(value) => handleChange("duration", value)}
                       required
                     >
-                      <SelectTrigger className="pl-10">
+                      <SelectTrigger
+                        id="duration"
+                        aria-invalid={!!fieldError("duration")}
+                        className={`pl-10 ${fieldError("duration") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      >
                         <SelectValue placeholder="Select duration" />
                       </SelectTrigger>
                       <SelectContent>
@@ -305,6 +437,9 @@ export default function PostJobPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {fieldError("duration") && (
+                    <p className="text-sm text-destructive">{fieldError("duration")}</p>
+                  )}
                 </div>
               </div>
 
