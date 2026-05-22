@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { bumpNamespace } from '@/lib/cache/cacheAside';
 
 // GET current user's profile — auto-creates on first access (no webhook needed locally)
 export async function GET() {
@@ -142,6 +143,9 @@ export async function PUT(request: Request) {
         { status: 404 }
       );
     }
+
+    // Freelancer list pages render bio/location/skills, so invalidate.
+    await bumpNamespace('freelancers');
 
     return NextResponse.json({
       success: true,

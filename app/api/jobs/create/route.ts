@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
+import { bumpNamespace } from '@/lib/cache/cacheAside';
 
 export async function POST(request: Request) {
   try {
@@ -128,6 +129,10 @@ export async function POST(request: Request) {
       'UPDATE categories SET job_count = job_count + 1 WHERE id = $1',
       [categoryId]
     );
+
+    // Invalidate cached job list pages so the new posting is visible
+    // immediately. Fail-open: a cache error must not break job creation.
+    await bumpNamespace('jobs');
 
     // Notify observers (Observer pattern — REQ-5.x)
     try {
