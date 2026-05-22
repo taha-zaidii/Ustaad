@@ -147,6 +147,11 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      toast({
+        title: "Couldn't load your dashboard",
+        description: "Refresh the page or try again in a moment.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

@@ -37,47 +37,26 @@ export default function MyProposalsPage() {
   const fetchProposals = async () => {
     try {
       const response = await fetch("/api/proposals?role=freelancer");
-      if (response.ok) {
-        const data = await response.json();
-        setProposals(data.proposals || []);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setProposals(data.proposals || []);
     } catch (error) {
       console.error("Failed to fetch proposals:", error);
+      toast({
+        title: "Couldn't load your proposals",
+        description: "Please refresh or try again in a moment.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (proposalId: string) => {
-    if (!confirm("Are you sure you want to withdraw this proposal?")) {
-      return;
-    }
-
-    setDeletingId(proposalId);
-    try {
-      const response = await fetch(`/api/proposals/${proposalId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete proposal");
-      }
-
-      alert("Proposal withdrawn successfully!");
-      fetchProposals();
-    } catch (error: any) {
-      console.error("Failed to delete proposal:", error);
-      alert(error.message || "Failed to withdraw proposal");
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
+  // Server-side: PATCH status=withdrawn keeps the row for audit, DELETE
+  // removes it entirely. We surface a single "Withdraw" action and let the
+  // backend pick the right semantics based on proposal status.
   const handleWithdraw = async (proposalId: string) => {
-    if (!confirm("Are you sure you want to withdraw this proposal?")) {
-      return;
-    }
+    if (!confirm("Are you sure you want to withdraw this proposal?")) return;
 
     setDeletingId(proposalId);
     try {
@@ -93,15 +72,15 @@ export default function MyProposalsPage() {
       }
 
       toast({
-        title: "Success!",
-        description: "Proposal withdrawn successfully!",
+        title: "Proposal withdrawn",
+        description: "The client will no longer see this proposal.",
       });
       fetchProposals();
     } catch (error: any) {
       console.error("Error withdrawing proposal:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to withdraw proposal",
+        title: "Couldn't withdraw proposal",
+        description: error.message || "Please try again in a moment.",
         variant: "destructive",
       });
     } finally {
@@ -206,7 +185,6 @@ export default function MyProposalsPage() {
                       key={proposal.id}
                       proposal={proposal}
                       onWithdraw={handleWithdraw}
-                      onDelete={handleDelete}
                       deletingId={deletingId}
                     />
                   ))
@@ -224,7 +202,6 @@ export default function MyProposalsPage() {
                       key={proposal.id}
                       proposal={proposal}
                       onWithdraw={handleWithdraw}
-                      onDelete={handleDelete}
                       deletingId={deletingId}
                     />
                   ))
@@ -242,7 +219,6 @@ export default function MyProposalsPage() {
                       key={proposal.id}
                       proposal={proposal}
                       onWithdraw={handleWithdraw}
-                      onDelete={handleDelete}
                       deletingId={deletingId}
                     />
                   ))
@@ -260,7 +236,6 @@ export default function MyProposalsPage() {
                       key={proposal.id}
                       proposal={proposal}
                       onWithdraw={handleWithdraw}
-                      onDelete={handleDelete}
                       deletingId={deletingId}
                     />
                   ))
@@ -279,14 +254,12 @@ export default function MyProposalsPage() {
 interface ProposalCardProps {
   proposal: any;
   onWithdraw: (id: string) => void;
-  onDelete: (id: string) => void;
   deletingId: string | null;
 }
 
 function ProposalCard({
   proposal,
   onWithdraw,
-  onDelete,
   deletingId,
 }: ProposalCardProps) {
   const statusColors = {
@@ -322,9 +295,9 @@ function ProposalCard({
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Open job in a new view">
           <Link href={`/job/${proposal.job_id}`}>
-            <ExternalLink className="w-5 h-5" />
+            <ExternalLink className="w-5 h-5" aria-hidden="true" />
           </Link>
         </Button>
       </div>
@@ -356,15 +329,8 @@ function ProposalCard({
             onClick={() => onWithdraw(proposal.id)}
             disabled={deletingId === proposal.id}
           >
-            Withdraw Proposal
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => onDelete(proposal.id)}
-            disabled={deletingId === proposal.id}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
+            <Trash2 className="w-4 h-4 mr-2" aria-hidden="true" />
+            {deletingId === proposal.id ? "Withdrawing…" : "Withdraw Proposal"}
           </Button>
         </div>
       )}

@@ -72,6 +72,10 @@ export default function OnboardingPage() {
           {/* Client */}
           <button
             id="role-client"
+            type="button"
+            role="radio"
+            aria-checked={role === "client"}
+            aria-label={t("onboard.client_title")}
             onClick={() => setRole("client")}
             className={`rounded-2xl p-6 text-left transition-all duration-200 ${
               role === "client" ? "ring-2" : "ring-1 hover:ring-2"
@@ -86,7 +90,7 @@ export default function OnboardingPage() {
               className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
               style={{ background: role === "client" ? "var(--brand-dim)" : "var(--bg-elevated)" }}
             >
-              <Briefcase className="w-6 h-6" style={{ color: role === "client" ? "var(--brand)" : "var(--text-secondary)" }} />
+              <Briefcase aria-hidden="true" className="w-6 h-6" style={{ color: role === "client" ? "var(--brand)" : "var(--text-secondary)" }} />
             </div>
             <div className="font-semibold text-base mb-1" style={{ color: "var(--text-primary)" }}>
               {t("onboard.client_title")}
@@ -99,6 +103,10 @@ export default function OnboardingPage() {
           {/* Freelancer / Mazdoor */}
           <button
             id="role-freelancer"
+            type="button"
+            role="radio"
+            aria-checked={role === "freelancer"}
+            aria-label={t("onboard.worker_title")}
             onClick={() => setRole("freelancer")}
             className="rounded-2xl p-6 text-left transition-all duration-200"
             style={{
@@ -111,7 +119,7 @@ export default function OnboardingPage() {
               className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
               style={{ background: role === "freelancer" ? "var(--brand-dim)" : "var(--bg-elevated)" }}
             >
-              <Hammer className="w-6 h-6" style={{ color: role === "freelancer" ? "var(--brand)" : "var(--text-secondary)" }} />
+              <Hammer aria-hidden="true" className="w-6 h-6" style={{ color: role === "freelancer" ? "var(--brand)" : "var(--text-secondary)" }} />
             </div>
             <div className="font-semibold text-base mb-1" style={{ color: "var(--text-primary)" }}>
               {t("onboard.worker_title")}

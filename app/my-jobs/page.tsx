@@ -9,6 +9,7 @@ import { FullPageLoader, InlineLoader } from "@/components/Loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import {
   Briefcase,
@@ -57,7 +58,7 @@ export default function MyJobsPage() {
     try {
       setLoading(true);
       const response = await fetch('/api/my-jobs');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch jobs');
       }
@@ -66,6 +67,11 @@ export default function MyJobsPage() {
       setJobs(data.jobs || []);
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
+      toast({
+        title: "Couldn't load your jobs",
+        description: 'Refresh the page or try again in a moment.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }

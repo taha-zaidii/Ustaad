@@ -82,6 +82,7 @@ export default function JobDetailPage() {
   const [proposals, setProposals]       = useState<Proposal[]>([]);
   const [profile, setProfile]           = useState<{ userType: string; id: string } | null>(null);
   const [loading, setLoading]           = useState(true);
+  const [fetchState, setFetchState]     = useState<"idle" | "not-found" | "error">("idle");
   const [proposalOpen, setProposalOpen] = useState(false);
   const [submitting, setSubmitting]     = useState(false);
   const [updatingId, setUpdatingId]     = useState<string | null>(null);
@@ -91,6 +92,15 @@ export default function JobDetailPage() {
     proposedBudget: "",
     proposedDuration: "",
   });
+  const [proposalErrors, setProposalErrors] = useState<{
+    coverLetter?: string;
+    proposedBudget?: string;
+    proposedDuration?: string;
+  }>({});
+
+  const COVER_MIN = 30;
+  const COVER_MAX = 1500;
+  const PROPOSAL_MAX = 10_000_000; // PKR 1 crore
 
   const jobId = params.id as string;
 
@@ -107,13 +117,21 @@ export default function JobDetailPage() {
   const fetchJobData = async () => {
     try {
       setLoading(true);
+      setFetchState("idle");
       const res = await fetch(`/api/jobs/${jobId}`);
-      if (!res.ok) { router.push("/browse-jobs"); return; }
+      if (res.status === 404) {
+        setFetchState("not-found");
+        return;
+      }
+      if (!res.ok) {
+        setFetchState("error");
+        return;
+      }
       const data = await res.json();
       setJob(data.job);
       setSimilarJobs(data.similarJobs || []);
     } catch {
-      router.push("/browse-jobs");
+      setFetchState("error");
     } finally {
       setLoading(false);
     }
@@ -136,9 +154,35 @@ export default function JobDetailPage() {
     } catch { /* non-critical */ }
   };
 
+  const validateProposal = () => {
+    const errs: typeof proposalErrors = {};
+    const cover = proposalForm.coverLetter.trim();
+    if (cover.length < COVER_MIN)
+      errs.coverLetter = `Tell the client what you'd do — at least ${COVER_MIN} characters.`;
+    if (cover.length > COVER_MAX)
+      errs.coverLetter = `Keep the cover letter under ${COVER_MAX} characters.`;
+    const budget = Number(proposalForm.proposedBudget);
+    if (!proposalForm.proposedBudget || isNaN(budget) || budget <= 0)
+      errs.proposedBudget = "Enter a positive budget.";
+    else if (budget > PROPOSAL_MAX)
+      errs.proposedBudget = `Maximum is PKR ${PROPOSAL_MAX.toLocaleString()}.`;
+    if (!proposalForm.proposedDuration.trim())
+      errs.proposedDuration = "Roughly how long will this take?";
+    return errs;
+  };
+
   const handleSubmitProposal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!proposalForm.coverLetter || !proposalForm.proposedBudget) return;
+    const errs = validateProposal();
+    setProposalErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      toast({
+        title: "Please review your proposal",
+        description: Object.values(errs)[0],
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       setSubmitting(true);
       const res = await fetch("/api/proposals", {
@@ -146,9 +190,9 @@ export default function JobDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobId,
-          coverLetter: proposalForm.coverLetter,
+          coverLetter: proposalForm.coverLetter.trim(),
           proposedBudget: parseFloat(proposalForm.proposedBudget),
-          proposedDuration: proposalForm.proposedDuration,
+          proposedDuration: proposalForm.proposedDuration.trim(),
         }),
       });
       if (!res.ok) {
@@ -158,6 +202,7 @@ export default function JobDetailPage() {
       toast({ title: "Proposal Submitted!", description: "The client will be notified." });
       setProposalOpen(false);
       setProposalForm({ coverLetter: "", proposedBudget: "", proposedDuration: "" });
+      setProposalErrors({});
       fetchJobData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message || t("common.error"), variant: "destructive" });
@@ -190,6 +235,52 @@ export default function JobDetailPage() {
   };
 
   if (loading) return <FullPageLoader />;
+  if (fetchState === "not-found") {
+    return (
+      <>
+        <Navigation />
+        <main className="min-h-screen pt-[88px] pb-20 flex items-center justify-center">
+          <div className="max-w-md mx-auto px-6 text-center space-y-4">
+            <h1 className="text-3xl font-bold">Job not found</h1>
+            <p className="text-muted-foreground">
+              This job may have been removed or the link is incorrect.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => router.push("/browse-jobs")}>
+                Browse other jobs
+              </Button>
+              <Button variant="outline" onClick={() => router.back()}>
+                Go back
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+  if (fetchState === "error") {
+    return (
+      <>
+        <Navigation />
+        <main className="min-h-screen pt-[88px] pb-20 flex items-center justify-center">
+          <div className="max-w-md mx-auto px-6 text-center space-y-4">
+            <h1 className="text-3xl font-bold">Couldn&apos;t load this job</h1>
+            <p className="text-muted-foreground">
+              Something went wrong reaching the server. Try again in a moment.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={fetchJobData}>Retry</Button>
+              <Button variant="outline" onClick={() => router.push("/browse-jobs")}>
+                Browse other jobs
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
   if (!job)    return null;
 
   const isClient     = profile?.userType === "client";
@@ -316,49 +407,104 @@ export default function JobDetailPage() {
                   <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
                     {t("job.submit_proposal")}
                   </h2>
-                  <form onSubmit={handleSubmitProposal} className="space-y-4">
+                  <form onSubmit={handleSubmitProposal} className="space-y-4" noValidate>
                     <div>
-                      <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                      <label htmlFor="coverLetter" className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
                         {t("job.cover_letter")} *
                       </label>
                       <textarea
+                        id="coverLetter"
                         required
                         rows={5}
+                        maxLength={COVER_MAX}
+                        aria-invalid={!!proposalErrors.coverLetter}
+                        aria-describedby={proposalErrors.coverLetter ? "coverLetter-error" : "coverLetter-hint"}
                         className="w-full rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1"
-                        style={{ background: "var(--bg)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+                        style={{
+                          background: "var(--bg)",
+                          color: "var(--text-primary)",
+                          border: `1px solid ${proposalErrors.coverLetter ? "#ef4444" : "var(--border)"}`,
+                        }}
                         placeholder="Describe your experience, why you're the best fit, and how you'll approach this job..."
                         value={proposalForm.coverLetter}
-                        onChange={(e) => setProposalForm({ ...proposalForm, coverLetter: e.target.value })}
+                        onChange={(e) => {
+                          setProposalForm({ ...proposalForm, coverLetter: e.target.value });
+                          if (proposalErrors.coverLetter) setProposalErrors((p) => ({ ...p, coverLetter: undefined }));
+                        }}
                       />
+                      {proposalErrors.coverLetter ? (
+                        <p id="coverLetter-error" className="text-xs mt-1 text-red-500">
+                          {proposalErrors.coverLetter}
+                        </p>
+                      ) : (
+                        <p id="coverLetter-hint" className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                          Minimum {COVER_MIN} characters
+                          {" "}
+                          ({proposalForm.coverLetter.length}/{COVER_MAX})
+                        </p>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                        <label htmlFor="proposedBudget" className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
                           {t("job.proposed_rate")} *
                         </label>
                         <input
+                          id="proposedBudget"
                           type="number"
                           required
-                          min="0"
+                          min={1}
+                          max={PROPOSAL_MAX}
+                          step={100}
+                          aria-invalid={!!proposalErrors.proposedBudget}
+                          aria-describedby={proposalErrors.proposedBudget ? "proposedBudget-error" : undefined}
                           className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
-                          style={{ background: "var(--bg)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+                          style={{
+                            background: "var(--bg)",
+                            color: "var(--text-primary)",
+                            border: `1px solid ${proposalErrors.proposedBudget ? "#ef4444" : "var(--border)"}`,
+                          }}
                           placeholder="e.g. 5000"
                           value={proposalForm.proposedBudget}
-                          onChange={(e) => setProposalForm({ ...proposalForm, proposedBudget: e.target.value })}
+                          onChange={(e) => {
+                            setProposalForm({ ...proposalForm, proposedBudget: e.target.value });
+                            if (proposalErrors.proposedBudget) setProposalErrors((p) => ({ ...p, proposedBudget: undefined }));
+                          }}
                         />
+                        {proposalErrors.proposedBudget && (
+                          <p id="proposedBudget-error" className="text-xs mt-1 text-red-500">
+                            {proposalErrors.proposedBudget}
+                          </p>
+                        )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                          {t("job.delivery_time")}
+                        <label htmlFor="proposedDuration" className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                          {t("job.delivery_time")} *
                         </label>
                         <input
+                          id="proposedDuration"
                           type="text"
+                          maxLength={40}
+                          aria-invalid={!!proposalErrors.proposedDuration}
+                          aria-describedby={proposalErrors.proposedDuration ? "proposedDuration-error" : undefined}
                           className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
-                          style={{ background: "var(--bg)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+                          style={{
+                            background: "var(--bg)",
+                            color: "var(--text-primary)",
+                            border: `1px solid ${proposalErrors.proposedDuration ? "#ef4444" : "var(--border)"}`,
+                          }}
                           placeholder="e.g. 3 days"
                           value={proposalForm.proposedDuration}
-                          onChange={(e) => setProposalForm({ ...proposalForm, proposedDuration: e.target.value })}
+                          onChange={(e) => {
+                            setProposalForm({ ...proposalForm, proposedDuration: e.target.value });
+                            if (proposalErrors.proposedDuration) setProposalErrors((p) => ({ ...p, proposedDuration: undefined }));
+                          }}
                         />
+                        {proposalErrors.proposedDuration && (
+                          <p id="proposedDuration-error" className="text-xs mt-1 text-red-500">
+                            {proposalErrors.proposedDuration}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-3 pt-2">
@@ -385,7 +531,7 @@ export default function JobDetailPage() {
 
               {/* Proposals list — client only */}
               {isClient && (
-                <div className="rounded-2xl p-6 ring-soft" style={{ background: "var(--bg-card)" }}>
+                <div id="proposals" className="rounded-2xl p-6 ring-soft scroll-mt-24" style={{ background: "var(--bg-card)" }}>
                   <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
                     {t("job.proposals_received")} ({proposals.length})
                   </h2>
