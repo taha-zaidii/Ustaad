@@ -30,9 +30,34 @@ export const translations = {
 
   // ── Hero ────────────────────────────────────────────────────────────────
   "hero.tagline":      { en: "Pakistan's Skilled Labour Marketplace", ur: "Pakistan ka Apna Kaam ka Platform" },
+  // Headline split: <line1> <brandWord> <lineEnd>
+  // English:  "Whether home or business — Ustaad has you covered"
+  // Roman-Urdu: "Ghar ka Kaam Ho Ya Business — Ustaad Hai!"
+  "hero.line1":        { en: "Whether home or",  ur: "Ghar ka Kaam Ho Ya" },
+  "hero.line2_pre":    { en: "business with",    ur: "Business —" },
+  "hero.line2_brand":  { en: "Ustaad",           ur: "Ustaad" },
+  "hero.line2_post":   { en: "you’re covered.",  ur: "Hai!" },
   "hero.heading1":     { en: "Find Verified",    ur: "Verified" },
   "hero.heading2":     { en: "Skilled Workers",  ur: "Kaarigar Dhundo" },
   "hero.heading3":     { en: "Instantly",        ur: "Fauran" },
+  "hero.sub_lead":     { en: "Electrician,",     ur: "Bijli wala," },
+  "hero.sub_mid":      { en: "plumber,",         ur: "plumber," },
+  "hero.sub_accent":   { en: "painter",          ur: "painter" },
+  "hero.sub_tail":     {
+    en: ", mechanic — one place for all of it. Verified pros, transparent pricing, guaranteed satisfaction.",
+    ur: ", mechanic — sab kuch ek jagah. Verified pros, transparent pricing, guaranteed satisfaction.",
+  },
+  "hero.search_city":  { en: "City",             ur: "Shehar" },
+  "hero.search_kind":  { en: "Type of work",     ur: "Kaam Ka Qism" },
+  "hero.search_btn":   { en: "Search",           ur: "Dhundho" },
+  "hero.trust_free":   { en: "Free to browse",          ur: "Browse karna free" },
+  "hero.trust_verified": { en: "Verified professionals", ur: "Verified kaarigar" },
+  "hero.trust_no_fee": { en: "No hidden fees",          ur: "Koi chhupi fees nahi" },
+  "hero.trust_support":{ en: "24/7 Roman Urdu support", ur: "24/7 Roman Urdu support" },
+  "hero.pill":         {
+    en: "10,000+ verified pros · live across Pakistan",
+    ur: "10,000+ verified pros · poore Pakistan mein live",
+  },
   "hero.subheading":   { en: "Connect with 10,000+ verified tradesmen across 50+ Pakistani cities. Electricians, plumbers, carpenters, and more.", ur: "50+ Pakistani shahron mein 10,000+ verified kaarigar. Bijli wala, plumber, carpenter, aur bhi bahut kuch." },
   "hero.search_placeholder": { en: "What work do you need? (e.g. Electrician, Plumber…)", ur: "Kaunsa kaam chahiye? (jaise Bijli wala, Plumber…)" },
   "hero.cta_find":     { en: "Find a Worker",   ur: "Kaarigar Dhundo" },

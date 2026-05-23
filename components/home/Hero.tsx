@@ -19,15 +19,7 @@ import {
 } from "lucide-react";
 import { cities, categories } from "./data";
 import MagneticButton from "./MagneticButton";
-
-// ─────────────────────────────────────────────────────────────────────────
-// Word/letter splitting helpers
-// ─────────────────────────────────────────────────────────────────────────
-
-const lineOne   = "Ghar ka Kaam Ho Ya";
-const lineTwo   = "Business —";
-const brandWord = "Ustaad";
-const lineEnd   = "Hai!";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function splitToChars(text: string) {
   return text.split(""); // includes spaces; we render &nbsp; for those
@@ -97,6 +89,12 @@ function FloatingChip({
 
 export default function Hero() {
   const root = useRef<HTMLElement>(null);
+  const { t, lang } = useLanguage();
+
+  const lineOne   = t("hero.line1");
+  const lineTwoA  = t("hero.line2_pre");
+  const brandWord = t("hero.line2_brand");
+  const lineEnd   = t("hero.line2_post");
 
   // Cursor parallax field — every floating element subscribes with its own depth
   const px = useMotionValue(0);
@@ -201,7 +199,7 @@ export default function Hero() {
           >
             <span className="text-[14px]">🇵🇰</span>
             <span className="text-[12px] font-semibold tracking-[0.06em] font-mono uppercase">
-              10,000+ Verified Pros · Live Across Pakistan
+              {t("hero.pill")}
             </span>
             <span className="live-pulse"></span>
           </motion.div>
@@ -211,7 +209,7 @@ export default function Hero() {
             {/* Line 1 — chars */}
             <motion.span variants={containerV} className="block">
               {splitToChars(lineOne).map((c, i) => (
-                <span key={`l1-${i}`} className="char-mask">
+                <span key={`l1-${i}-${lang}`} className="char-mask">
                   <motion.span variants={charV}>
                     {c === " " ? " " : c}
                   </motion.span>
@@ -221,8 +219,8 @@ export default function Hero() {
 
             {/* Line 2 — Business — Ustaad Hai! with editorial accent */}
             <motion.span variants={containerV} className="block">
-              {splitToChars(lineTwo).map((c, i) => (
-                <span key={`l2a-${i}`} className="char-mask">
+              {splitToChars(lineTwoA).map((c, i) => (
+                <span key={`l2a-${i}-${lang}`} className="char-mask">
                   <motion.span variants={charV}>
                     {c === " " ? " " : c}
                   </motion.span>
@@ -275,7 +273,7 @@ export default function Hero() {
               </span>
 
               {splitToChars(lineEnd).map((c, i) => (
-                <span key={`l2b-${i}`} className="char-mask">
+                <span key={`l2b-${i}-${lang}`} className="char-mask">
                   <motion.span variants={charV}>
                     {c === " " ? " " : c}
                   </motion.span>
@@ -291,14 +289,13 @@ export default function Hero() {
             style={{ color: "var(--text-secondary)" }}
           >
             <span className="text-editorial-italic" style={{ color: "var(--text-primary)" }}>
-              Electrician,
+              {t("hero.sub_lead")}
             </span>{" "}
-            plumber,{" "}
+            {t("hero.sub_mid")}{" "}
             <span className="text-editorial-italic" style={{ color: "var(--text-primary)" }}>
-              painter
+              {t("hero.sub_accent")}
             </span>
-            , mechanic — sab kuch ek jagah. Verified pros, transparent pricing,
-            guaranteed satisfaction.
+            {t("hero.sub_tail")}
           </motion.p>
 
           {/* Search bar */}
@@ -315,7 +312,7 @@ export default function Hero() {
               <div className="flex items-center gap-2.5 pl-6 pr-3 flex-1 min-w-0">
                 <MapPin className="w-[18px] h-[18px]" style={{ color: "var(--brand)" }} />
                 <div className="flex flex-col leading-tight min-w-0">
-                  <span className="text-[10px] uppercase tracking-[0.16em] font-semibold text-slate-500">Shehar</span>
+                  <span className="text-[10px] uppercase tracking-[0.16em] font-semibold text-slate-500">{t("hero.search_city")}</span>
                   <select name="location"
                           className="bg-transparent outline-none font-semibold text-[15px] text-slate-900 truncate cursor-pointer"
                           defaultValue="Karachi" aria-label="Select city">
@@ -329,7 +326,7 @@ export default function Hero() {
               <div className="flex items-center gap-2.5 pl-3 pr-3 flex-1 min-w-0">
                 <Wrench className="w-[18px] h-[18px]" style={{ color: "var(--brand)" }} />
                 <div className="flex flex-col leading-tight min-w-0">
-                  <span className="text-[10px] uppercase tracking-[0.16em] font-semibold text-slate-500">Kaam Ka Qism</span>
+                  <span className="text-[10px] uppercase tracking-[0.16em] font-semibold text-slate-500">{t("hero.search_kind")}</span>
                   <select name="category"
                           className="bg-transparent outline-none font-semibold text-[15px] text-slate-900 truncate cursor-pointer"
                           defaultValue="Electrician" aria-label="Select service">
@@ -347,7 +344,7 @@ export default function Hero() {
                 style={{ background: "var(--grad-brand)" }}
                 ariaLabel="Search"
               >
-                Dhundho <ArrowRight className="w-4 h-4" />
+                {t("hero.search_btn")} <ArrowRight className="w-4 h-4" />
               </MagneticButton>
             </div>
 
@@ -359,10 +356,15 @@ export default function Hero() {
               className="mt-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-[13px]"
               style={{ color: "var(--text-secondary)" }}
             >
-              {["Free to browse", "Verified professionals", "No hidden fees", "24/7 Roman Urdu support"].map((t) => (
-                <motion.span key={t} variants={fadeUp} className="inline-flex items-center gap-1.5">
+              {[
+                t("hero.trust_free"),
+                t("hero.trust_verified"),
+                t("hero.trust_no_fee"),
+                t("hero.trust_support"),
+              ].map((label) => (
+                <motion.span key={`${lang}-${label}`} variants={fadeUp} className="inline-flex items-center gap-1.5">
                   <Check className="w-3.5 h-3.5" style={{ color: "var(--success)" }} />
-                  {t}
+                  {label}
                 </motion.span>
               ))}
             </motion.div>
