@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useScroll,
@@ -9,7 +9,39 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { MapPin, Star, BadgeCheck, Clock, Briefcase, ArrowUpRight } from "lucide-react";
-import { freelancers } from "./data";
+import { freelancers as seedFreelancers, type Freelancer } from "./data";
+
+const ACCENTS = ["#f59e0b", "#3b82f6", "#8b5cf6", "#06b6d4", "#a16207", "#10b981"];
+
+function initials(name: string | null | undefined): string {
+  if (!name) return "??";
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() ?? "")
+    .join("") || "??";
+}
+
+function mapApiFreelancer(row: any, idx: number): Freelancer {
+  const reviews = Number(row.reviews) || 0;
+  const rate = row.hourlyRate || "PKR —";
+  return {
+    initials: initials(row.name),
+    name: row.name || "Mazdoor",
+    role: row.title || "Verified Professional",
+    location: row.location || "Pakistan",
+    rating: Number(row.rating) || 0,
+    reviews,
+    completedJobs: Number(row.completedJobs) || 0,
+    responseTime: "Usually replies fast",
+    skills: Array.isArray(row.skills) ? row.skills.slice(0, 3) : [],
+    rate: typeof rate === "string" ? rate : "PKR —",
+    verified: true,
+    badge: reviews >= 100 ? "Top Rated" : null,
+    accent: ACCENTS[idx % ACCENTS.length],
+  };
+}
 
 const containerV: Variants = {
   hidden: {},
@@ -18,6 +50,28 @@ const containerV: Variants = {
 
 export default function TopFreelancers() {
   const root = useRef<HTMLDivElement>(null);
+  const [items, setItems] = useState<Freelancer[]>(seedFreelancers.slice(0, 6));
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/freelancers", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const rows: any[] = Array.isArray(data?.freelancers) ? data.freelancers : [];
+        if (cancelled) return;
+        if (rows.length >= 1) {
+          setItems(rows.slice(0, 6).map(mapApiFreelancer));
+        }
+      } catch {
+        /* keep seed */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Parallax: as you scroll, the freelancer track shifts horizontally
   const { scrollYProgress } = useScroll({
@@ -81,9 +135,9 @@ export default function TopFreelancers() {
           style={{ x: trackX }}
           className="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-5 flex md:overflow-visible overflow-x-auto no-scrollbar gap-4 -mx-5 px-5 lg:mx-0 lg:px-0 snap-x snap-mandatory"
         >
-          {freelancers.map((f, idx) => (
+          {items.map((f, idx) => (
             <motion.article
-              key={f.name}
+              key={`${f.name}-${idx}`}
               variants={{
                 hidden: { opacity: 0, y: 50 },
                 show:   { opacity: 1, y: 0,  transition: { type: "spring", stiffness: 180, damping: 22 } },

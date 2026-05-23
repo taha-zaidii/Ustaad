@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import {
   motion,
   useMotionValue,
@@ -10,7 +10,25 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { MapPin, Clock, Users, ArrowUpRight } from "lucide-react";
-import { jobs, type Job } from "./data";
+import { jobs as seedJobs, type Job } from "./data";
+
+// Map a row returned by /api/jobs into the shape this component renders.
+// Defaults plug holes where the API doesn't (yet) provide a value.
+function mapApiJob(row: any): Job {
+  return {
+    title: row.title ?? "Untitled job",
+    category: row.category ?? "General",
+    categoryColor: row.categoryColor ?? "#f97316",
+    location: row.location ?? "Pakistan",
+    posted: row.postedTime ?? "recently",
+    budget: row.budget ?? "PKR —",
+    budgetType: typeof row.budget === "string" && row.budget.includes("/hr") ? "hourly" : "fixed",
+    description: row.description ?? "",
+    tags: Array.isArray(row.skills) ? row.skills.slice(0, 3) : [],
+    urgent: false,
+    applicants: Number(row.proposals) || 0,
+  };
+}
 
 function JobCard({ j, idx }: { j: Job; idx: number }) {
   const ref = useRef<HTMLElement>(null);
@@ -175,6 +193,30 @@ const containerV: Variants = {
 
 export default function FeaturedJobs() {
   const root = useRef<HTMLDivElement>(null);
+  const [items, setItems] = useState<Job[]>(seedJobs.slice(0, 6));
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/jobs?limit=6", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const rows: any[] = Array.isArray(data?.jobs) ? data.jobs : [];
+        if (cancelled) return;
+        // Only swap to live data if the DB actually has jobs — otherwise the
+        // seed data keeps the homepage looking populated for visitors.
+        if (rows.length >= 1) {
+          setItems(rows.slice(0, 6).map(mapApiJob));
+        }
+      } catch {
+        /* keep seed */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section ref={root} className="py-28 lg:py-36 relative">
@@ -228,8 +270,8 @@ export default function FeaturedJobs() {
           viewport={{ once: true, margin: "-80px" }}
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 perspective-1000"
         >
-          {jobs.map((j, i) => (
-            <JobCard key={j.title} j={j} idx={i} />
+          {items.map((j, i) => (
+            <JobCard key={`${j.title}-${i}`} j={j} idx={i} />
           ))}
         </motion.div>
       </div>

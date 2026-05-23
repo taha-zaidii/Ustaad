@@ -11,7 +11,7 @@ import {
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight } from "lucide-react";
-import { categories, type Category } from "./data";
+import { categories as seedCategories, type Category } from "./data";
 
 // 3D tilt card
 function CategoryCard({ c, idx }: { c: Category; idx: number }) {
@@ -132,6 +132,7 @@ const containerV: Variants = {
 
 export default function CategoryGrid() {
   const root = useRef<HTMLDivElement>(null);
+  const [items, setItems] = useState<Category[]>(seedCategories);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -147,6 +148,38 @@ export default function CategoryGrid() {
         });
     }, root);
     return () => ctx.revert();
+  }, []);
+
+  // Pull live job counts from the DB but keep the seed icons/colours since
+  // the API only returns icon names as strings, not Lucide components.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/categories", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const rows: any[] = Array.isArray(data?.categories) ? data.categories : [];
+        if (cancelled || rows.length === 0) return;
+        const byName: Record<string, { count: number }> = {};
+        for (const r of rows) {
+          const name = String(r.title || "").trim();
+          const n = parseInt(String(r.count || "").replace(/[^\d]/g, ""), 10);
+          if (name) byName[name.toLowerCase()] = { count: isNaN(n) ? 0 : n };
+        }
+        setItems((prev) =>
+          prev.map((c) => {
+            const hit = byName[c.nameEn.toLowerCase()];
+            return hit ? { ...c, jobs: hit.count } : c;
+          })
+        );
+      } catch {
+        /* keep seed counts */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -201,7 +234,7 @@ export default function CategoryGrid() {
           viewport={{ once: true, margin: "-80px" }}
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 perspective-1000"
         >
-          {categories.map((c, idx) => (
+          {items.map((c, idx) => (
             <CategoryCard key={c.nameEn} c={c} idx={idx} />
           ))}
         </motion.div>
