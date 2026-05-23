@@ -8,19 +8,33 @@ import Marquee from "./Marquee";
 
 export default function Testimonials() {
   const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
   const t = testimonials[idx];
 
+  // Auto-advance every 7s, but pause when the user is hovering or has any
+  // element inside the section focused (keyboard-readers, screen-readers).
   useEffect(() => {
-    const id = setInterval(() => setIdx((i) => (i + 1) % testimonials.length), 7000);
+    if (paused) return;
+    const id = setInterval(
+      () => setIdx((i) => (i + 1) % testimonials.length),
+      7000
+    );
     return () => clearInterval(id);
-  }, []);
+  }, [paused]);
 
   const go = (dir: 1 | -1) =>
     setIdx((i) => (i + dir + testimonials.length) % testimonials.length);
 
   return (
-    <section className="relative py-28 lg:py-36 overflow-hidden border-y"
-             style={{ borderColor: "var(--border)" }}>
+    <section
+      className="relative py-28 lg:py-36 overflow-hidden border-y"
+      style={{ borderColor: "var(--border)" }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+      aria-roledescription="carousel"
+    >
       {/* Top + bottom marquee bands — opposite directions */}
       <div className="absolute inset-x-0 top-0 opacity-[0.08] pointer-events-none">
         <Marquee speed="slow">

@@ -42,11 +42,14 @@ const linkGroups = [
   },
 ];
 
-const socials = [
-  { Icon: Facebook,  href: "#", label: "Facebook"  },
-  { Icon: Instagram, href: "#", label: "Instagram" },
-  { Icon: Twitter,   href: "#", label: "Twitter"   },
-  { Icon: Youtube,   href: "#", label: "YouTube"   },
+// Real social profiles will be filled in once the brand pages are
+// live. Items with href === null render as disabled (no <a>) so we
+// never ship dead "#" links.
+const socials: { Icon: typeof Facebook; href: string | null; label: string }[] = [
+  { Icon: Facebook,  href: null, label: "Facebook"  },
+  { Icon: Instagram, href: null, label: "Instagram" },
+  { Icon: Twitter,   href: null, label: "Twitter"   },
+  { Icon: Youtube,   href: null, label: "YouTube"   },
 ];
 
 export default function SiteFooter() {
@@ -121,21 +124,39 @@ export default function SiteFooter() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {socials.map(({ Icon, href, label }) => (
-              <a
-                key={label}
-                href={href}
-                aria-label={label}
-                className="w-9 h-9 rounded-lg flex items-center justify-center transition hover:text-[color:var(--brand)]"
-                style={{
-                  color: "var(--text-secondary)",
-                  background: "var(--bg-card)",
-                  boxShadow: "inset 0 0 0 1px var(--border)",
-                }}
-              >
-                <Icon className="w-4 h-4" />
-              </a>
-            ))}
+            {socials.map(({ Icon, href, label }) =>
+              href ? (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition hover:text-[color:var(--brand)]"
+                  style={{
+                    color: "var(--text-secondary)",
+                    background: "var(--bg-card)",
+                    boxShadow: "inset 0 0 0 1px var(--border)",
+                  }}
+                >
+                  <Icon className="w-4 h-4" aria-hidden="true" />
+                </a>
+              ) : (
+                <span
+                  key={label}
+                  aria-label={`${label} — coming soon`}
+                  title="Coming soon"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center opacity-50 cursor-not-allowed"
+                  style={{
+                    color: "var(--text-muted)",
+                    background: "var(--bg-card)",
+                    boxShadow: "inset 0 0 0 1px var(--border)",
+                  }}
+                >
+                  <Icon className="w-4 h-4" aria-hidden="true" />
+                </span>
+              )
+            )}
           </div>
         </div>
       </div>

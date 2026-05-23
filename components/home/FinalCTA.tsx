@@ -1,10 +1,33 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Briefcase, Search, Asterisk } from "lucide-react";
 import MagneticButton from "./MagneticButton";
 
 export default function FinalCTA() {
+  // Live count of currently open jobs, with a sensible static fallback for
+  // first paint so the "live jobs" badge never reads as 0.
+  const [openJobs, setOpenJobs] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/jobs?limit=200", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const n = Array.isArray(data?.jobs) ? data.jobs.length : 0;
+        if (!cancelled && n > 0) setOpenJobs(n);
+      } catch {
+        /* leave null → fall back to "many" copy below */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className="relative py-28 lg:py-36 overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-5 lg:px-8">
@@ -60,7 +83,9 @@ export default function FinalCTA() {
                 style={{ background: "var(--brand-dim)", color: "var(--brand)" }}
               >
                 <span className="pulse-dot" />
-                Aaj 247 naye kaam post hue
+                {openJobs !== null
+                  ? `${openJobs} open jobs right now`
+                  : "Live jobs across Pakistan"}
               </motion.span>
 
               <motion.h2
