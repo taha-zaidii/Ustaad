@@ -1,302 +1,245 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useSpring,
-} from "framer-motion";
-import { Menu, X, Phone, ArrowUpRight, ArrowLeftRight, LogOut } from "lucide-react";
+  Menu,
+  X,
+  ArrowRight,
+  ArrowLeftRight,
+  LogOut,
+  Languages,
+} from "lucide-react";
 import Link from "next/link";
-import MagneticButton from "./MagneticButton";
 import UserMenu from "./UserMenu";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth, useClerk } from "@clerk/nextjs";
 
+/**
+ * Navbar — calm, sticky, accessible.
+ *
+ * Design notes
+ *   - One row of content. No big logo flourishes, no scrolling progress bar
+ *     to flicker on every scroll. The bar only adds a soft border + subtle
+ *     surface once the user scrolls past the hero.
+ *   - Brand mark = wordmark, not a coloured square + Beta pill.
+ *   - Language toggle is a real button with both labels visible so the
+ *     user can see which language they're switching to.
+ *   - Mobile drawer is a vertical column with proper focus order.
+ */
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen]         = useState(false);
-  const { lang, setLang, t }    = useLanguage();
-  const { isSignedIn }          = useAuth();
-  const { signOut }             = useClerk();
-
-  const handleMobileSwitchRole = async () => {
-    setOpen(false);
-    try {
-      const r = await fetch("/api/profile/switch-role", { method: "POST" });
-      if (r.ok) window.location.reload();
-    } catch {}
-  };
-  const handleMobileSignOut = async () => {
-    setOpen(false);
-    await signOut({ redirectUrl: "/" });
-  };
-
-  // Top scroll-progress bar
-  const { scrollYProgress } = useScroll();
-  const progressX = useSpring(scrollYProgress, { stiffness: 140, damping: 24, mass: 0.4 });
+  const [open, setOpen] = useState(false);
+  const { lang, setLang, t } = useLanguage();
+  const { isSignedIn } = useAuth();
+  const { signOut } = useClerk();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
+    const onScroll = () => setScrolled(window.scrollY > 16);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const navLinks = [
-    { label: t("nav.browse_jobs"),  href: "/browse-jobs"  },
-    { label: t("nav.freelancers"),  href: "/freelancers"  },
+    { label: t("nav.browse_jobs"), href: "/browse-jobs" },
+    { label: t("nav.freelancers"), href: "/freelancers" },
     { label: t("nav.how_it_works"), href: "/how-it-works" },
   ];
 
+  const handleMobileSwitchRole = async () => {
+    setOpen(false);
+    try {
+      const r = await fetch("/api/profile/switch-role", { method: "POST" });
+      if (r.ok) window.location.reload();
+    } catch {
+      /* noop */
+    }
+  };
+
+  const handleMobileSignOut = async () => {
+    setOpen(false);
+    await signOut({ redirectUrl: "/" });
+  };
+
   return (
-    <motion.nav
-      initial={{ y: -90, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 80, damping: 18, delay: 0.05 }}
-      className={`fixed inset-x-0 top-0 z-[100] transition-[background,backdrop-filter,border-color] duration-300 ${
-        scrolled
-          ? "bg-[rgba(15,17,23,0.78)] backdrop-blur-xl border-b"
-          : "bg-transparent border-b border-transparent"
-      }`}
-      style={{ borderColor: scrolled ? "var(--border)" : "transparent" }}
+    <header
+      className="sticky top-0 z-50 transition-colors"
+      style={{
+        background: scrolled
+          ? "color-mix(in oklab, var(--bg) 88%, transparent)"
+          : "transparent",
+        backdropFilter: scrolled ? "blur(12px)" : undefined,
+        WebkitBackdropFilter: scrolled ? "blur(12px)" : undefined,
+        borderBottom: `1px solid ${scrolled ? "var(--border)" : "transparent"}`,
+      }}
     >
-      <div className="max-w-[1400px] mx-auto px-5 lg:px-8 h-[68px] flex items-center justify-between gap-6">
-        {/* Logo — animated */}
+      <nav className="mx-auto max-w-[1200px] px-5 lg:px-8 h-[68px] flex items-center justify-between gap-6">
         <Link
           href="/"
-          className="flex items-center gap-2.5 group"
-          data-cursor="link"
-          aria-label="Ustaad — Home"
+          aria-label="Ustaad — home"
+          className="flex items-baseline gap-2"
         >
-          <motion.div
-            whileHover={{ rotate: -8, scale: 1.08 }}
-            transition={{ type: "spring", stiffness: 380, damping: 18 }}
-            className="relative w-9 h-9 rounded-[10px] flex items-center justify-center font-extrabold text-white text-[16px] shadow-[0_6px_22px_-6px_var(--brand-glow)] overflow-hidden"
-            style={{ background: "var(--grad-brand)", fontFamily: "var(--font-display)" }}
-          >
-            <span className="relative z-[1]">U</span>
-            <motion.span
-              aria-hidden
-              className="absolute inset-0"
-              initial={{ x: "-110%" }}
-              whileHover={{ x: "110%" }}
-              transition={{ duration: 0.6 }}
-              style={{
-                background:
-                  "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%)",
-              }}
-            />
-          </motion.div>
           <span
-            className="text-[19px] font-bold tracking-[-0.025em]"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="text-[22px] leading-none font-display"
+            style={{ color: "var(--text-primary)" }}
           >
             Ustaad
           </span>
-          <span
-            className="hidden sm:inline-block text-[10.5px] font-bold px-1.5 py-0.5 rounded-[5px] font-mono uppercase tracking-[0.12em]"
-            style={{ color: "var(--brand)", background: "var(--brand-dim)" }}
-          >
-            Beta
+          <span className="text-[11px] uppercase tracking-[0.18em] font-mono text-[color:var(--text-muted)]">
+            PK
           </span>
         </Link>
 
-        {/* Center links */}
-        <div className="hidden lg:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
           {navLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              data-cursor="link"
-              className="relative px-4 py-2 text-[14px] font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors group"
+              className="px-3 py-2 text-[14px] font-medium rounded-md text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] transition-colors"
             >
-              <span className="relative z-[1]">{l.label}</span>
-              <motion.span
-                aria-hidden
-                className="absolute inset-1 rounded-full opacity-0 group-hover:opacity-100"
-                transition={{ duration: 0.25 }}
-                style={{ background: "var(--bg-elevated)" }}
-              />
-              <span className="absolute left-4 right-4 -bottom-px h-px bg-[color:var(--brand)] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
+              {l.label}
             </Link>
           ))}
         </div>
 
-        {/* Right cluster */}
         <div className="hidden lg:flex items-center gap-2">
-          {/* Language Toggle */}
           <button
-            id="lang-toggle"
+            type="button"
             onClick={() => setLang(lang === "en" ? "ur" : "en")}
-            aria-label="Toggle language"
-            className="px-3 py-1.5 rounded-full text-[13px] font-semibold font-mono transition-all hover:scale-105 active:scale-95"
-            style={{
-              color: "var(--brand)",
-              background: "var(--brand-dim)",
-              boxShadow: "inset 0 0 0 1px rgba(249,115,22,0.3)",
-            }}
+            aria-label={`Switch language to ${lang === "en" ? "Urdu" : "English"}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] transition-colors"
           >
-            {t("nav.lang_toggle")}
+            <Languages className="w-3.5 h-3.5" aria-hidden="true" />
+            {lang === "en" ? "اردو" : "English"}
           </button>
-
-          <a
-            href="tel:0300878223"
-            data-cursor="link"
-            className="flex items-center gap-1.5 text-[13px] font-medium font-mono px-3 py-1.5 rounded-full ring-soft hover:ring-soft-bright transition"
-            style={{ color: "var(--brand)" }}
-          >
-            <Phone className="w-3.5 h-3.5" />
-            0300-USTAAD
-          </a>
 
           {isSignedIn ? (
             <>
-              <MagneticButton
-                as="a"
+              <Link
                 href="/post-job"
-                strength={20}
-                parallax={1.4}
-                className="px-5 py-2.5 text-[14px] font-semibold rounded-full text-white"
-                style={{
-                  background: "var(--grad-brand)",
-                  boxShadow: "0 8px 24px -8px var(--brand-glow)",
-                  fontFamily: "var(--font-display)",
-                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[14px] font-semibold text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
+                style={{ background: "var(--brand)" }}
               >
-                {t("nav.post_job")} <ArrowUpRight className="w-4 h-4" />
-              </MagneticButton>
+                {t("nav.post_job")}
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </Link>
               <UserMenu />
             </>
           ) : (
             <>
               <Link
                 href="/sign-in"
-                data-cursor="link"
-                className="px-4 py-2 text-[14px] font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition"
+                className="px-3 py-2 text-[14px] font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors"
               >
                 {t("nav.sign_in")}
               </Link>
-              <MagneticButton
-                as="a"
+              <Link
                 href="/sign-up"
-                strength={20}
-                parallax={1.4}
-                className="px-5 py-2.5 text-[14px] font-semibold rounded-full text-white"
-                style={{
-                  background: "var(--grad-brand)",
-                  boxShadow: "0 8px 24px -8px var(--brand-glow)",
-                  fontFamily: "var(--font-display)",
-                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[14px] font-semibold text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
+                style={{ background: "var(--brand)" }}
               >
-                {t("nav.sign_up")} <ArrowUpRight className="w-4 h-4" />
-              </MagneticButton>
+                {t("nav.sign_up")}
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </Link>
             </>
           )}
         </div>
 
-        {/* Mobile toggle */}
         <button
-          aria-label="Open menu"
-          className="lg:hidden p-2 -mr-2 text-[color:var(--text-primary)]"
+          type="button"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          className="lg:hidden p-2 -mr-2 rounded-md hover:bg-[color:var(--bg-elevated)]"
           onClick={() => setOpen((s) => !s)}
         >
-          {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {open ? (
+            <X className="w-5 h-5" aria-hidden="true" />
+          ) : (
+            <Menu className="w-5 h-5" aria-hidden="true" />
+          )}
         </button>
-      </div>
+      </nav>
 
-      {/* Scroll progress */}
-      <motion.div
-        aria-hidden
-        className="absolute left-0 right-0 bottom-0 h-px origin-left"
-        style={{ scaleX: progressX, background: "var(--grad-brand)" }}
-      />
-
-      {/* Mobile drawer */}
       <AnimatePresence>
         {open && (
           <motion.div
+            id="mobile-menu"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: [0.65, 0, 0.35, 1] }}
+            transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
             className="lg:hidden overflow-hidden border-t"
             style={{
-              background: "rgba(15,17,23,0.96)",
-              backdropFilter: "blur(20px)",
               borderColor: "var(--border)",
+              background: "var(--bg)",
             }}
           >
-            <div className="px-5 py-5 flex flex-col gap-1">
-              {navLinks.map((l, i) => (
-                <motion.div
+            <div className="px-5 py-4 flex flex-col gap-1">
+              {navLinks.map((l) => (
+                <Link
                   key={l.href}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="block px-3 py-3 rounded-md text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)]"
                 >
-                  <Link
-                    href={l.href}
-                    onClick={() => setOpen(false)}
-                    className="block px-3 py-3 rounded-lg text-[15px] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)]"
-                  >
-                    {l.label}
-                  </Link>
-                </motion.div>
+                  {l.label}
+                </Link>
               ))}
-              <div className="h-px my-2" style={{ background: "var(--border)" }} />
 
-              {/* Mobile language toggle */}
+              <div className="hairline my-2" />
+
               <button
+                type="button"
                 onClick={() => setLang(lang === "en" ? "ur" : "en")}
-                className="px-3 py-3 text-left text-[14px] font-semibold"
-                style={{ color: "var(--brand)" }}
+                className="flex items-center gap-2 px-3 py-3 text-left text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] rounded-md"
               >
-                🌐 {t("nav.lang_toggle")}
+                <Languages
+                  className="w-4 h-4"
+                  style={{ color: "var(--brand)" }}
+                  aria-hidden="true"
+                />
+                {lang === "en" ? "اردو" : "English"}
               </button>
 
-              <a
-                href="tel:0300878223"
-                className="flex items-center gap-2 px-3 py-3 text-[14px] font-mono"
-                style={{ color: "var(--brand)" }}
-              >
-                <Phone className="w-4 h-4" />
-                0300-USTAAD
-              </a>
               {isSignedIn ? (
                 <>
                   <Link
                     href="/dashboard"
                     onClick={() => setOpen(false)}
-                    className="px-3 py-3 text-[15px] text-[color:var(--text-primary)]"
+                    className="px-3 py-3 rounded-md text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)]"
                   >
                     {t("nav.dashboard")}
                   </Link>
                   <button
                     type="button"
                     onClick={handleMobileSwitchRole}
-                    className="flex items-center gap-2 px-3 py-3 text-left text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] rounded-lg"
+                    className="flex items-center gap-2 px-3 py-3 text-left text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] rounded-md"
                   >
-                    <ArrowLeftRight className="w-4 h-4" style={{ color: "var(--brand)" }} />
-                    {t("nav.switch_to_freelancer")} / {t("nav.switch_to_client")}
+                    <ArrowLeftRight
+                      className="w-4 h-4"
+                      style={{ color: "var(--brand)" }}
+                      aria-hidden="true"
+                    />
+                    {t("nav.switch_to_freelancer")}
                   </button>
                   <button
                     type="button"
                     onClick={handleMobileSignOut}
-                    className="flex items-center gap-2 px-3 py-3 text-left text-[15px] hover:bg-[rgba(239,68,68,0.08)] rounded-lg"
-                    style={{ color: "#fca5a5" }}
+                    className="flex items-center gap-2 px-3 py-3 text-left text-[15px] rounded-md hover:bg-[color:var(--error-soft)]"
+                    style={{ color: "var(--error)" }}
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-4 h-4" aria-hidden="true" />
                     {t("nav.sign_out")}
                   </button>
                   <Link
                     href="/post-job"
                     onClick={() => setOpen(false)}
-                    className="mt-2 px-5 py-3 text-center text-[15px] font-semibold rounded-full text-white"
-                    style={{ background: "var(--grad-brand)" }}
+                    className="mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md text-[15px] font-semibold text-[color:var(--text-inverse)]"
+                    style={{ background: "var(--brand)" }}
                   >
-                    {t("nav.post_job")} →
+                    {t("nav.post_job")}
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </Link>
                 </>
               ) : (
@@ -304,17 +247,18 @@ export default function Navbar() {
                   <Link
                     href="/sign-in"
                     onClick={() => setOpen(false)}
-                    className="px-3 py-3 text-[15px] text-[color:var(--text-primary)]"
+                    className="px-3 py-3 rounded-md text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)]"
                   >
                     {t("nav.sign_in")}
                   </Link>
                   <Link
                     href="/sign-up"
                     onClick={() => setOpen(false)}
-                    className="mt-2 px-5 py-3 text-center text-[15px] font-semibold rounded-full text-white"
-                    style={{ background: "var(--grad-brand)" }}
+                    className="mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md text-[15px] font-semibold text-[color:var(--text-inverse)]"
+                    style={{ background: "var(--brand)" }}
                   >
-                    {t("nav.sign_up")} →
+                    {t("nav.sign_up")}
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </Link>
                 </>
               )}
@@ -322,6 +266,6 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </header>
   );
 }
