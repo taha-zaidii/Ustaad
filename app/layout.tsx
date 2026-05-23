@@ -4,59 +4,45 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ClerkProvider } from "@clerk/nextjs";
-import {
-  Plus_Jakarta_Sans,
-  JetBrains_Mono,
-  Bricolage_Grotesque,
-  Fraunces,
-} from "next/font/google";
-import SmoothScroll from "@/components/home/SmoothScroll";
-import CursorFollower from "@/components/home/CursorFollower";
+import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
-
-// Display — variable, characterful, optical-sized
-const bricolage = Bricolage_Grotesque({
+// Display — a quiet serif. Used for headings only; doesn't fight body copy.
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
-  weight: ["200", "300", "400", "500", "600", "700", "800"],
+  weight: ["400"],
+  style: ["normal", "italic"],
   variable: "--font-display",
   display: "swap",
 });
 
-// Editorial italic accent — high contrast, dramatic
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  style: ["normal", "italic"],
-  variable: "--font-editorial",
-  display: "swap",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-jakarta",
-  display: "swap",
-});
-
-const mono = JetBrains_Mono({
+// Body — neutral, screen-tested, ubiquitous.
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+// Mono — numbers, code, monospace UI bits.
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
   variable: "--font-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Ustaad — Pakistan ka Apna Kaam ka Platform",
+  title: "Ustaad — Verified workers and skilled professionals across Pakistan",
   description:
-    "Ghar ka kaam ho ya business — electrician, plumber, painter, mechanic, sab kuch ek jagah. 10,000+ verified Pakistani professionals across 50+ cities.",
+    "Hire verified electricians, plumbers, AC technicians, carpenters and other skilled trades across 50+ Pakistani cities. Transparent pricing, AI-matched proposals, escrow-ready payments.",
   keywords: [
     "Ustaad",
-    "Pakistan freelancers",
+    "Pakistan skilled labour",
     "electrician Pakistan",
     "plumber Pakistan",
     "AC repair",
-    "local services",
+    "verified workers",
     "kaam dhundo",
   ],
 };
@@ -68,13 +54,12 @@ export default function RootLayout({
     <ClerkProvider>
       <html
         lang="en"
-        className={`${bricolage.variable} ${fraunces.variable} ${jakarta.variable} ${mono.variable}`}
+        className={`${instrumentSerif.variable} ${inter.variable} ${mono.variable}`}
       >
         <body className="antialiased">
           <LanguageProvider>
             <TooltipProvider>
-              <CursorFollower />
-              <SmoothScroll>{children}</SmoothScroll>
+              {children}
               <Toaster />
               <Sonner />
             </TooltipProvider>
