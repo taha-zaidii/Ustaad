@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Asterisk } from "lucide-react";
+import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import { testimonials } from "./data";
-import Marquee from "./Marquee";
 
 export default function Testimonials() {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const t = testimonials[idx];
 
-  // Auto-advance every 7s, but pause when the user is hovering or has any
-  // element inside the section focused (keyboard-readers, screen-readers).
   useEffect(() => {
     if (paused) return;
     const id = setInterval(
@@ -27,98 +24,75 @@ export default function Testimonials() {
 
   return (
     <section
-      className="relative py-28 lg:py-36 overflow-hidden border-y"
-      style={{ borderColor: "var(--border)" }}
+      aria-roledescription="carousel"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
-      aria-roledescription="carousel"
+      className="border-y"
+      style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}
     >
-      {/* Top + bottom marquee bands — opposite directions */}
-      <div className="absolute inset-x-0 top-0 opacity-[0.08] pointer-events-none">
-        <Marquee speed="slow">
-          {["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"].map(c => (
-            <span key={`t-${c}`} className="px-8 text-[64px] font-extrabold tracking-tighter"
-                  style={{ color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
-              {c} <Asterisk className="inline w-8 h-8 -mt-3" style={{ color: "var(--brand)" }} />
-            </span>
-          ))}
-        </Marquee>
-      </div>
-      <div className="absolute inset-x-0 bottom-0 opacity-[0.08] pointer-events-none">
-        <Marquee speed="slow" reverse>
-          {["Hyderabad", "Sialkot", "Gujranwala", "Bahawalpur", "Sargodha", "Mardan", "Sukkur"].map(c => (
-            <span key={`b-${c}`} className="px-8 text-[64px] font-extrabold tracking-tighter italic text-editorial-italic"
-                  style={{ color: "var(--text-primary)", fontFamily: "var(--font-editorial)" }}>
-              {c} ✦
-            </span>
-          ))}
-        </Marquee>
-      </div>
-
-      <div className="max-w-[1400px] mx-auto px-5 lg:px-8 relative">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="inline-block text-[11px] uppercase tracking-[0.24em] font-mono mb-4"
-                style={{ color: "var(--brand)" }}>
-            ✦ §08 — Voices
-          </span>
-          <h2 className="text-section">
+      <div className="mx-auto max-w-[1000px] px-5 lg:px-8 py-24 lg:py-32">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <span className="eyebrow">Voices</span>
+          <h2 className="mt-3 text-section">
             What people are{" "}
-            <span className="text-editorial-italic" style={{ color: "var(--brand)" }}>saying.</span>
+            <span className="text-editorial-italic" style={{ color: "var(--brand)" }}>
+              saying.
+            </span>
           </h2>
-          <p className="mt-3 text-[16px]" style={{ color: "var(--text-secondary)" }}>
-            Pakistan bhar se asli stories — workers, clients, businesses.
-          </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
+        <div className="relative">
+          <Quote
+            aria-hidden="true"
+            className="absolute -top-2 left-0 w-10 h-10 opacity-15"
+            style={{ color: "var(--brand)" }}
+          />
+
           <AnimatePresence mode="wait">
             <motion.blockquote
               key={idx}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="relative font-editorial italic font-semibold leading-[1.05] mb-12 max-w-[18ch] mx-auto text-center"
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+              className="relative text-center font-display text-[color:var(--text-primary)]"
               style={{
-                color: "var(--text-primary)",
-                fontSize: "clamp(34px, 4.5vw, 60px)",
-                fontVariationSettings: '"opsz" 144, "WONK" 1, "SOFT" 100',
-                letterSpacing: "-0.025em",
+                fontSize: "clamp(24px, 3.4vw, 38px)",
+                lineHeight: 1.25,
+                letterSpacing: "-0.005em",
               }}
             >
-              <span className="inline-block" style={{ color: "var(--brand)" }}>"</span>
               {t.quote}
-              <span className="inline-block" style={{ color: "var(--brand)" }}>"</span>
             </motion.blockquote>
           </AnimatePresence>
 
-          <div className="flex items-center justify-between gap-6 flex-wrap">
+          <div className="mt-10 flex items-center justify-between gap-6 flex-wrap">
             <AnimatePresence mode="wait">
               <motion.div
                 key={idx + "-meta"}
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                transition={{ duration: 0.3 }}
+                exit={{ opacity: 0, x: 8 }}
+                transition={{ duration: 0.25 }}
                 className="flex items-center gap-3"
               >
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-[14px]"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-semibold"
                   style={{
-                    background: `linear-gradient(135deg, ${t.accent}, var(--brand))`,
-                    fontFamily: "var(--font-display)",
+                    background: "var(--brand-soft)",
+                    color: "var(--brand)",
                   }}
+                  aria-hidden="true"
                 >
                   {t.initials}
                 </div>
-                <div>
-                  <div className="font-semibold text-[15px]"
-                       style={{ fontFamily: "var(--font-display)" }}>
+                <div className="text-left">
+                  <div className="text-[14.5px] font-semibold text-[color:var(--text-primary)]">
                     {t.name}
                   </div>
-                  <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+                  <div className="text-[12.5px] text-[color:var(--text-secondary)]">
                     {t.role} · {t.city}
                   </div>
                 </div>
@@ -126,38 +100,39 @@ export default function Testimonials() {
             </AnimatePresence>
 
             <div className="flex items-center gap-2">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
+              <button
+                type="button"
                 onClick={() => go(-1)}
-                aria-label="Previous"
-                data-cursor="link"
-                className="w-11 h-11 rounded-full flex items-center justify-center ring-soft hover:ring-soft-bright transition"
+                aria-label="Previous testimonial"
+                className="w-10 h-10 rounded-full flex items-center justify-center ring-soft hover:ring-soft-bright transition-colors"
+                style={{ background: "var(--bg-card)" }}
               >
-                <ChevronLeft className="w-4 h-4" />
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
+                <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
                 onClick={() => go(1)}
-                aria-label="Next"
-                data-cursor="link"
-                className="w-11 h-11 rounded-full flex items-center justify-center text-white"
-                style={{ background: "var(--grad-brand)" }}
+                aria-label="Next testimonial"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
+                style={{ background: "var(--brand)" }}
               >
-                <ChevronRight className="w-4 h-4" />
-              </motion.button>
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </button>
             </div>
           </div>
 
-          {/* Pager dots */}
-          <div className="flex justify-center gap-2 mt-9">
+          <div className="mt-8 flex justify-center gap-1.5" role="tablist" aria-label="Testimonials">
             {testimonials.map((_, i) => (
               <button
                 key={i}
-                onClick={() => setIdx(i)}
+                type="button"
+                role="tab"
+                aria-selected={i === idx}
                 aria-label={`Go to testimonial ${i + 1}`}
-                className="h-1.5 rounded-full transition-all duration-300"
+                onClick={() => setIdx(i)}
+                className="h-1 rounded-full transition-all duration-300"
                 style={{
-                  width: i === idx ? 32 : 8,
+                  width: i === idx ? 24 : 8,
                   background: i === idx ? "var(--brand)" : "var(--border-bright)",
                 }}
               />
