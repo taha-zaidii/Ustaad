@@ -1,13 +1,21 @@
 /**
- * Redis singleton with graceful degradation.
+ * Upstash Redis (REST) singleton with graceful degradation.
  *
- * When REDIS_URL is unset (e.g. local dev without a Redis container,
- * or a Vercel preview without the env attached) we return null and
- * every caching helper short-circuits to the underlying loader. This
- * keeps the app fully functional without a cache and means the same
- * code path runs in dev, staging, and prod.
+ * Uses @upstash/redis — HTTPS REST client, no persistent TCP connection,
+ * which is the right choice for Vercel serverless functions. It also
+ * works on the Edge runtime if we ever move endpoints there.
+ *
+ * When UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN are unset
+ * (e.g. local dev with no cache, preview branches) we return null and
+ * every helper short-circuits to the underlying loader. This keeps the
+ * app fully functional without a cache.
+ *
+ * Why REST not ioredis: serverless functions cannot reliably reuse a
+ * TCP connection across cold starts; ioredis ends up reopening sockets
+ * on every invocation which actually makes things slower than the
+ * Upstash REST roundtrip (single HTTPS request to a regional edge).
  */
-import Redis from "ioredis";
+import { Redis } from "@upstash/redis";
 
 let client: Redis | null = null;
 let configured = false;
@@ -16,29 +24,17 @@ export function getRedis(): Redis | null {
   if (configured) return client;
   configured = true;
 
-  const url = process.env.REDIS_URL;
-  if (!url) {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
     client = null;
     return null;
   }
 
   try {
-    client = new Redis(url, {
-      // Don't block API routes if Redis is unreachable; fail open.
-      maxRetriesPerRequest: 1,
-      connectTimeout: 800,
-      commandTimeout: 400,
-      lazyConnect: true,
-      enableOfflineQueue: false,
-    });
-    client.on("error", (err) => {
-      // Single line; ioredis can emit per failed reconnect attempt.
-      if ((err as NodeJS.ErrnoException).code !== "ECONNREFUSED") {
-        console.warn("[cache] redis error:", err.message);
-      }
-    });
+    client = new Redis({ url, token });
   } catch (err) {
-    console.warn("[cache] redis init failed:", (err as Error).message);
+    console.warn("[cache] upstash init failed:", (err as Error).message);
     client = null;
   }
   return client;

@@ -12,6 +12,10 @@
  *
  * All operations are fail-open: any Redis error returns the loader's
  * result so the user-facing path never breaks because of cache trouble.
+ *
+ * Implementation note: @upstash/redis auto-serializes JS values to JSON
+ * on `set` and parses on `get`, so we pass objects directly instead of
+ * round-tripping through JSON.stringify.
  */
 import { getRedis } from "./redis";
 
@@ -22,8 +26,8 @@ async function getNamespaceVersion(ns: string): Promise<string> {
   if (!r) return "0";
   try {
     const key = `nsver:${ns}`;
-    const cur = await r.get(key);
-    if (cur) return cur;
+    const cur = await r.get<string | number>(key);
+    if (cur !== null && cur !== undefined) return String(cur);
     // Initialize with current timestamp so a brand-new namespace has a
     // stable, monotonically increasing baseline.
     const init = String(Date.now());
@@ -59,9 +63,9 @@ export async function cachedRead<T>(opts: CachedReadOptions<T>): Promise<T> {
   const fullKey = `cache:${opts.namespace}:${ver}:${opts.key}`;
 
   try {
-    const hit = await r.get(fullKey);
-    if (hit) {
-      return JSON.parse(hit) as T;
+    const hit = await r.get<T>(fullKey);
+    if (hit !== null && hit !== undefined) {
+      return hit;
     }
   } catch {
     /* fall through to loader */
@@ -69,12 +73,9 @@ export async function cachedRead<T>(opts: CachedReadOptions<T>): Promise<T> {
 
   const value = await opts.loader();
   try {
-    await r.set(
-      fullKey,
-      JSON.stringify(value),
-      "EX",
-      opts.ttlSeconds ?? DEFAULT_TTL_SECONDS
-    );
+    await r.set(fullKey, value as unknown as string, {
+      ex: opts.ttlSeconds ?? DEFAULT_TTL_SECONDS,
+    });
   } catch {
     /* fail open */
   }

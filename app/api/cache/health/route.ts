@@ -1,12 +1,13 @@
 /**
  * GET /api/cache/health
  *
- * Sanity probe for the cache-aside layer. Verifies REDIS_URL is set and
- * a round-trip PING completes within 800ms. No secrets exposed.
+ * Sanity probe for the cache-aside layer (Upstash REST). Verifies the
+ * env vars are set and a round-trip completes within budget. No
+ * secrets exposed.
  *
  *   {
- *     configured: bool   — REDIS_URL is set
- *     reachable:  bool   — PING returned PONG within the budget
+ *     configured: bool   — UPSTASH_REDIS_REST_URL + _TOKEN are set
+ *     reachable:  bool   — round-trip SET+GET succeeded
  *     latency_ms: number — round-trip ms
  *   }
  */
@@ -16,14 +17,16 @@ import { getRedis } from "@/lib/cache/redis";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const configured = Boolean(process.env.REDIS_URL);
+  const configured = Boolean(
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  );
   if (!configured) {
     return NextResponse.json({
       configured: false,
       reachable: false,
       latency_ms: 0,
       hint:
-        "Set REDIS_URL in the Vercel environment (Upstash → Connect → Node/ioredis URL).",
+        "Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in the Vercel environment (Upstash → REST API tab).",
     });
   }
 
@@ -33,16 +36,21 @@ export async function GET() {
       configured: true,
       reachable: false,
       latency_ms: 0,
-      hint: "Redis client could not be initialized.",
+      hint: "Upstash client could not be initialized.",
     });
   }
 
   const start = Date.now();
   try {
-    const reply = await r.ping();
+    // @upstash/redis exposes ping; we use a SET+GET round-trip as a
+    // stronger signal that the connection is fully functional.
+    const probeKey = "health:probe";
+    const probeVal = `t${start}`;
+    await r.set(probeKey, probeVal, { ex: 30 });
+    const back = await r.get<string>(probeKey);
     return NextResponse.json({
       configured: true,
-      reachable: reply === "PONG",
+      reachable: back === probeVal,
       latency_ms: Date.now() - start,
     });
   } catch (e) {
@@ -50,8 +58,7 @@ export async function GET() {
       configured: true,
       reachable: false,
       latency_ms: Date.now() - start,
-      hint:
-        e instanceof Error ? e.message : "PING failed.",
+      hint: e instanceof Error ? e.message : "round-trip failed",
     });
   }
 }
