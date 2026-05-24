@@ -1,4 +1,4 @@
-import { Star, MapPin, ArrowRight } from "lucide-react";
+import { Star, MapPin, ArrowRight, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 
 interface FreelancerCardProps {
@@ -25,16 +25,15 @@ const FreelancerCard = ({
   avatar,
 }: FreelancerCardProps) => {
   return (
-    <article
-      className="group h-full flex flex-col gap-4 rounded-xl p-6 ring-soft transition-colors hover:ring-soft-bright"
-      style={{ background: "var(--bg-card)" }}
-    >
+    <article className="glass-card glass-edge h-full flex flex-col gap-4 p-6">
       <div className="flex items-start gap-4">
         <div
-          className="h-12 w-12 shrink-0 rounded-full flex items-center justify-center font-semibold text-[15px]"
+          className="relative h-12 w-12 shrink-0 rounded-full flex items-center justify-center font-semibold text-[15px] font-display"
           style={{
-            background: "var(--brand-soft)",
-            color: "var(--brand)",
+            background: "var(--grad-brand)",
+            color: "var(--text-inverse)",
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.3), 0 6px 14px -4px var(--brand-glow)",
           }}
           aria-hidden={avatar ? "false" : "true"}
         >
@@ -47,6 +46,19 @@ const FreelancerCard = ({
           ) : (
             (name || "?").charAt(0).toUpperCase()
           )}
+          <span
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full grid place-items-center"
+            style={{
+              background: "var(--bg)",
+              border: "1px solid var(--border-bright)",
+            }}
+          >
+            <BadgeCheck
+              className="w-4 h-4"
+              style={{ color: "var(--accent)" }}
+              aria-hidden="true"
+            />
+          </span>
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="truncate text-[15px] font-semibold leading-tight text-[color:var(--text-primary)]">
@@ -89,7 +101,7 @@ const FreelancerCard = ({
 
       <div className="flex flex-wrap gap-1.5">
         {skills.slice(0, 3).map((skill) => (
-          <span key={skill} className="chip">
+          <span key={skill} className="chip chip-brand">
             {skill}
           </span>
         ))}
@@ -102,7 +114,7 @@ const FreelancerCard = ({
 
       <div className="flex items-center justify-between gap-3">
         <div className="leading-tight">
-          <p className="text-[10.5px] uppercase tracking-[0.12em] font-medium text-[color:var(--text-muted)]">
+          <p className="text-[10.5px] uppercase tracking-[0.12em] font-mono text-[color:var(--text-muted)]">
             Starting at
           </p>
           <p className="font-mono font-semibold text-[15.5px] tabular-nums text-[color:var(--text-primary)]">
@@ -112,11 +124,7 @@ const FreelancerCard = ({
             </span>
           </p>
         </div>
-        <Link
-          href={`/freelancer/${id}`}
-          className="inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-[13px] font-semibold text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
-          style={{ background: "var(--brand)" }}
-        >
+        <Link href={`/freelancer/${id}`} className="btn-brand">
           View
           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>

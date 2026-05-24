@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { freelancers as seedFreelancers, type Freelancer } from "./data";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function initials(name: string | null | undefined): string {
   if (!name) return "??";
@@ -46,6 +47,7 @@ function mapApiFreelancer(row: any): Freelancer {
 }
 
 export default function TopFreelancers() {
+  const { t } = useLanguage();
   const [items, setItems] = useState<Freelancer[]>(seedFreelancers.slice(0, 6));
 
   useEffect(() => {
@@ -55,13 +57,9 @@ export default function TopFreelancers() {
         const res = await fetch("/api/freelancers", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        const rows: any[] = Array.isArray(data?.freelancers)
-          ? data.freelancers
-          : [];
+        const rows: any[] = Array.isArray(data?.freelancers) ? data.freelancers : [];
         if (cancelled) return;
-        if (rows.length >= 1) {
-          setItems(rows.slice(0, 6).map(mapApiFreelancer));
-        }
+        if (rows.length >= 1) setItems(rows.slice(0, 6).map(mapApiFreelancer));
       } catch {
         /* keep seed */
       }
@@ -72,26 +70,24 @@ export default function TopFreelancers() {
   }, []);
 
   return (
-    <section className="mx-auto max-w-[1200px] px-5 lg:px-8 py-20 lg:py-28">
+    <section className="mx-auto max-w-[1240px] px-5 lg:px-8 py-20 lg:py-28">
       <div className="flex items-end justify-between flex-wrap gap-6 mb-10">
         <div className="max-w-2xl">
-          <span className="eyebrow">Trusted pros</span>
-          <h2 className="mt-3 text-section">
-            Pakistan&apos;s most{" "}
-            <span className="text-editorial-italic" style={{ color: "var(--brand)" }}>
-              reviewed
-            </span>{" "}
-            workers.
+          <span className="eyebrow eyebrow-bilingual">{t("home.pros.eyebrow")}</span>
+          <h2 className="mt-4 text-section">
+            {t("home.pros.title_a")}{" "}
+            <span className="text-grad-brand">{t("home.pros.title_b")}</span>{" "}
+            {t("home.pros.title_c")}
           </h2>
           <p className="mt-4 text-[15px] leading-relaxed text-[color:var(--text-secondary)]">
-            Verified, rated, and a single tap away.
+            {t("home.pros.desc")}
           </p>
         </div>
         <Link
           href="/freelancers"
           className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[color:var(--brand)] hover:underline underline-offset-4"
         >
-          Browse all
+          {t("home.pros.browse_all")}
           <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
         </Link>
       </div>
@@ -104,26 +100,31 @@ export default function TopFreelancers() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ delay: i * 0.05, duration: 0.4 }}
-            className="flex flex-col p-6 rounded-xl ring-soft transition-colors hover:ring-soft-bright"
-            style={{ background: "var(--bg-card)" }}
+            className="glass-card glass-edge flex flex-col p-6"
           >
             <div className="flex items-start justify-between mb-4 gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div
-                  className="relative w-12 h-12 rounded-full flex items-center justify-center text-[15px] font-semibold shrink-0"
+                  className="relative w-12 h-12 rounded-full flex items-center justify-center text-[15px] font-semibold shrink-0 font-display"
                   style={{
-                    background: "var(--brand-soft)",
-                    color: "var(--brand)",
+                    background: "var(--grad-brand)",
+                    color: "var(--text-inverse)",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255,255,255,0.3), 0 6px 14px -4px var(--brand-glow)",
                   }}
                   aria-hidden="true"
                 >
                   {f.initials}
                   {f.verified && (
-                    <BadgeCheck
-                      className="absolute -bottom-1 -right-1 w-4 h-4"
-                      style={{ color: "var(--brand)", background: "var(--bg-card)", borderRadius: "999px" }}
-                      aria-hidden="true"
-                    />
+                    <span
+                      className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full grid place-items-center"
+                      style={{
+                        background: "var(--bg)",
+                        border: "1px solid var(--border-bright)",
+                      }}
+                    >
+                      <BadgeCheck className="w-4 h-4" style={{ color: "var(--accent)" }} aria-hidden="true" />
+                    </span>
                   )}
                 </div>
                 <div className="min-w-0">
@@ -139,9 +140,7 @@ export default function TopFreelancers() {
                   </div>
                 </div>
               </div>
-              {f.badge && (
-                <span className="chip chip-brand text-[10.5px]">{f.badge}</span>
-              )}
+              {f.badge && <span className="chip chip-brand text-[10.5px]">{t("home.pros.top_rated")}</span>}
             </div>
 
             <div className="flex items-center gap-2 mb-4 star-row">
@@ -165,14 +164,14 @@ export default function TopFreelancers() {
                 {f.rating.toFixed(1)}
               </span>
               <span className="text-[12px] text-[color:var(--text-muted)]">
-                ({f.reviews} reviews)
+                ({f.reviews} {t("home.pros.reviews")})
               </span>
             </div>
 
             <div className="flex items-center gap-2 mb-5 flex-wrap">
               <span className="chip">
                 <Briefcase className="w-3 h-3" aria-hidden="true" />
-                {f.completedJobs} jobs
+                {f.completedJobs} {t("home.pros.jobs")}
               </span>
               <span className="chip">
                 <Clock className="w-3 h-3" aria-hidden="true" />
@@ -182,7 +181,7 @@ export default function TopFreelancers() {
 
             <div className="flex flex-wrap gap-1.5 mb-5">
               {f.skills.map((s) => (
-                <span key={s} className="chip">
+                <span key={s} className="chip chip-brand">
                   {s}
                 </span>
               ))}
@@ -192,19 +191,15 @@ export default function TopFreelancers() {
 
             <div className="mt-auto flex items-center justify-between gap-3">
               <div>
-                <div className="text-[11px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
-                  Starting from
+                <div className="text-[11px] uppercase tracking-[0.14em] font-mono text-[color:var(--text-muted)]">
+                  {t("home.pros.from")}
                 </div>
                 <div className="font-mono font-semibold text-[15px] tabular-nums">
                   {f.rate}
                 </div>
               </div>
-              <Link
-                href="/freelancers"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-[13px] font-semibold text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
-                style={{ background: "var(--brand)" }}
-              >
-                Hire
+              <Link href="/freelancers" className="btn-brand">
+                {t("home.pros.hire")}
                 <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
             </div>

@@ -21,10 +21,7 @@ const JobCard = ({
   category,
 }: JobCardProps) => {
   return (
-    <article
-      className="group h-full flex flex-col gap-4 rounded-xl p-6 ring-soft transition-colors hover:ring-soft-bright"
-      style={{ background: "var(--bg-card)" }}
-    >
+    <article className="glass-card glass-edge h-full flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-3">
         <span className="chip chip-brand w-fit">{category}</span>
         <h3 className="text-card-title clamp-2">
@@ -56,18 +53,14 @@ const JobCard = ({
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col leading-tight">
-          <span className="text-[10.5px] uppercase tracking-[0.12em] font-medium text-[color:var(--text-muted)]">
+          <span className="text-[10.5px] uppercase tracking-[0.12em] font-mono text-[color:var(--text-muted)]">
             Budget
           </span>
           <span className="font-mono font-semibold text-[16px] tabular-nums text-[color:var(--text-primary)]">
             {budget}
           </span>
         </div>
-        <Link
-          href={`/job/${id}`}
-          className="inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-[13px] font-semibold text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
-          style={{ background: "var(--brand)" }}
-        >
+        <Link href={`/job/${id}`} className="btn-brand">
           View
           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>

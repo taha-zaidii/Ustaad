@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Search } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function FinalCTA() {
+  const { t } = useLanguage();
   const [openJobs, setOpenJobs] = useState<number | null>(null);
 
   useEffect(() => {
@@ -27,74 +29,77 @@ export default function FinalCTA() {
   }, []);
 
   return (
-    <section className="mx-auto max-w-[1100px] px-5 lg:px-8 py-24 lg:py-32">
+    <section className="mx-auto max-w-[1240px] px-5 lg:px-8 py-24 lg:py-32">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.5 }}
-        className="relative rounded-2xl p-10 sm:p-14 lg:p-16 ring-soft text-center"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, var(--brand-soft) 0%, transparent 70%), var(--bg-card)",
-          boxShadow: "var(--shadow-3)",
-        }}
+        transition={{ duration: 0.55 }}
+        className="relative glass-card glass-edge p-10 sm:p-14 lg:p-20 text-center overflow-hidden aurora-bg"
+        style={{ borderRadius: "var(--radius-2xl)" }}
       >
-        <span className="eyebrow inline-flex items-center gap-2">
-          <span className="live-pulse" aria-hidden="true" />
-          {openJobs !== null
-            ? `${openJobs} open jobs right now`
-            : "Live jobs across Pakistan"}
-        </span>
+        <div className="grain" aria-hidden="true" />
 
-        <h2
-          className="mt-5 mx-auto max-w-[680px]"
+        {/* Decorative orbs */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-20 -right-20 w-[420px] h-[420px] rounded-full pointer-events-none float-slower"
           style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(36px, 5vw, 60px)",
-            lineHeight: 1.05,
-            letterSpacing: "-0.02em",
+            background: "radial-gradient(closest-side, rgba(255,169,77,0.25), transparent 70%)",
+            filter: "blur(50px)",
           }}
-        >
-          Pakistan&apos;s{" "}
-          <span className="text-editorial-italic" style={{ color: "var(--brand)" }}>
-            verified
-          </span>{" "}
-          workforce, a click away.
-        </h2>
+        />
+        <div
+          aria-hidden="true"
+          className="absolute -bottom-24 -left-16 w-[360px] h-[360px] rounded-full pointer-events-none float-slow"
+          style={{
+            background: "radial-gradient(closest-side, rgba(52,211,153,0.18), transparent 70%)",
+            filter: "blur(50px)",
+          }}
+        />
 
-        <p className="mt-5 mx-auto max-w-[520px] text-[16px] leading-relaxed text-[color:var(--text-secondary)]">
-          Free sign-up. Verification in under 24 hours. Your first job can
-          start the same day.
-        </p>
+        <div className="relative">
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full glass">
+            <span className="live-pulse" aria-hidden="true" />
+            <span className="text-[12px] font-medium font-mono tracking-[0.04em] text-[color:var(--text-secondary)]">
+              {openJobs !== null
+                ? `${openJobs} ${t("home.final.live")}`
+                : t("home.final.live_fallback")}
+            </span>
+          </div>
 
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/sign-up"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-md text-[15px] font-semibold text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
-            style={{ background: "var(--brand)" }}
+          <h2
+            className="mt-6 mx-auto max-w-[760px] text-display"
           >
-            <Briefcase className="w-4 h-4" aria-hidden="true" />
-            Worker sign-up
-            <ArrowRight className="w-4 h-4" aria-hidden="true" />
-          </Link>
-          <Link
-            href="/post-job"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-md text-[15px] font-semibold ring-soft hover:ring-soft-bright transition-colors text-[color:var(--text-primary)]"
-            style={{ background: "var(--bg-card)" }}
-          >
-            <Search className="w-4 h-4" aria-hidden="true" />
-            Post a job
-          </Link>
+            {t("home.final.title_a")}{" "}
+            <span className="text-grad-brand">{t("home.final.title_b")}</span>{" "}
+            {t("home.final.title_c")}
+          </h2>
+
+          <p className="mt-5 mx-auto max-w-[560px] text-[16px] leading-relaxed text-[color:var(--text-secondary)]">
+            {t("home.final.desc")}
+          </p>
+
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
+            <Link href="/sign-up" className="btn-brand px-6 py-3.5 text-[15px]">
+              <Briefcase className="w-4 h-4" aria-hidden="true" />
+              {t("home.final.cta_worker")}
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </Link>
+            <Link href="/post-job" className="btn-glass px-6 py-3.5 text-[15px]">
+              <Search className="w-4 h-4" aria-hidden="true" />
+              {t("home.final.cta_client")}
+            </Link>
+          </div>
+
+          <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[13px] text-[color:var(--text-muted)]">
+            <li>{t("home.final.bullet1")}</li>
+            <li className="opacity-40">·</li>
+            <li>{t("home.final.bullet2")}</li>
+            <li className="opacity-40">·</li>
+            <li>{t("home.final.bullet3")}</li>
+          </ul>
         </div>
-
-        <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[13px] text-[color:var(--text-muted)]">
-          <li>No credit card required</li>
-          <li className="text-[color:var(--border-bright)]">·</li>
-          <li>Cancel anytime</li>
-          <li className="text-[color:var(--border-bright)]">·</li>
-          <li>24/7 Roman Urdu support</li>
-        </ul>
       </motion.div>
     </section>
   );

@@ -11,32 +11,32 @@ import {
   Handshake,
 } from "lucide-react";
 import { workerSteps, clientSteps } from "./data";
-
-const tabs = [
-  { id: "workers", label: "For workers" },
-  { id: "clients", label: "For clients" },
-] as const;
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const workerIcons = [UserPlus, Search, BadgeDollarSign];
 const clientIcons = [FileEdit, Inbox, Handshake];
 
 export default function HowItWorks() {
-  const [tab, setTab] = useState<(typeof tabs)[number]["id"]>("workers");
+  const { t } = useLanguage();
+  const [tab, setTab] = useState<"workers" | "clients">("workers");
   const data = tab === "workers" ? workerSteps : clientSteps;
   const Icons = tab === "workers" ? workerIcons : clientIcons;
 
+  const tabs = [
+    { id: "workers" as const, label: t("home.how.for_workers") },
+    { id: "clients" as const, label: t("home.how.for_clients") },
+  ];
+
   return (
-    <section className="mx-auto max-w-[1100px] px-5 lg:px-8 py-20 lg:py-28">
-      <div className="text-center max-w-xl mx-auto mb-10">
-        <span className="eyebrow">How it works</span>
-        <h2 className="mt-3 text-section">
-          Start in{" "}
-          <span className="text-editorial-italic" style={{ color: "var(--brand)" }}>
-            three steps.
-          </span>
+    <section className="mx-auto max-w-[1240px] px-5 lg:px-8 py-20 lg:py-28">
+      <div className="text-center max-w-2xl mx-auto mb-10">
+        <span className="eyebrow eyebrow-bilingual">{t("home.how.eyebrow")}</span>
+        <h2 className="mt-4 text-section">
+          {t("home.how.title_a")}{" "}
+          <span className="text-grad-brand">{t("home.how.title_b")}</span>
         </h2>
         <p className="mt-4 text-[15px] leading-relaxed text-[color:var(--text-secondary)]">
-          From sign-up to payment, every step is transparent — no surprises.
+          {t("home.how.desc")}
         </p>
       </div>
 
@@ -44,19 +44,18 @@ export default function HowItWorks() {
         <div
           role="tablist"
           aria-label="Audience"
-          className="inline-flex p-1 rounded-full ring-soft"
-          style={{ background: "var(--bg-card)" }}
+          className="glass-pill inline-flex p-1"
         >
-          {tabs.map((t) => {
-            const active = tab === t.id;
+          {tabs.map((tab_) => {
+            const active = tab === tab_.id;
             return (
               <button
-                key={t.id}
+                key={tab_.id}
                 type="button"
                 role="tab"
                 aria-selected={active}
-                onClick={() => setTab(t.id)}
-                className={`relative px-5 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                onClick={() => setTab(tab_.id)}
+                className={`relative px-5 py-2 rounded-full text-[13px] font-semibold transition-colors ${
                   active
                     ? "text-[color:var(--text-inverse)]"
                     : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
@@ -67,11 +66,11 @@ export default function HowItWorks() {
                     layoutId="how-tab-pill"
                     aria-hidden="true"
                     className="absolute inset-0 rounded-full"
-                    style={{ background: "var(--brand)" }}
+                    style={{ background: "var(--grad-brand)" }}
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
                 )}
-                <span className="relative">{t.label}</span>
+                <span className="relative">{tab_.label}</span>
               </button>
             );
           })}
@@ -85,29 +84,54 @@ export default function HowItWorks() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-          className="grid md:grid-cols-3 gap-4 md:gap-5"
+          className="grid md:grid-cols-3 gap-5 relative"
         >
+          {/* Dotted connector — desktop only */}
+          <svg
+            className="hidden md:block absolute left-[18%] right-[18%] top-[58px] -z-[1]"
+            height="2"
+            preserveAspectRatio="none"
+            viewBox="0 0 600 2"
+            aria-hidden="true"
+          >
+            <path
+              d="M 0 1 L 600 1"
+              stroke="var(--border-bright)"
+              strokeWidth="2"
+              strokeDasharray="2 8"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
+
           {data.map((s, i) => {
             const Icon = Icons[i];
             return (
               <li
                 key={s.num}
-                className="relative p-6 rounded-xl ring-soft"
-                style={{ background: "var(--bg-card)" }}
+                className="glass-card p-6 relative"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <span
-                    className="w-10 h-10 rounded-md grid place-items-center"
+                    className="relative w-12 h-12 rounded-xl grid place-items-center font-display font-bold text-[14px]"
                     style={{
-                      background: "var(--brand-soft)",
-                      color: "var(--brand)",
+                      background: "var(--grad-brand)",
+                      color: "var(--text-inverse)",
+                      boxShadow:
+                        "inset 0 1px 0 rgba(255,255,255,0.3), 0 6px 18px -6px var(--brand-glow)",
                     }}
                     aria-hidden="true"
                   >
                     <Icon className="w-5 h-5" />
+                    <span
+                      className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full grid place-items-center text-[11px] font-mono font-semibold glass"
+                      style={{ color: "var(--brand)" }}
+                    >
+                      {s.num}
+                    </span>
                   </span>
-                  <span className="font-mono text-[12px] text-[color:var(--text-muted)] tabular-nums">
-                    Step {s.num}
+                  <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                    {t("home.how.step")} {s.num}
                   </span>
                 </div>
                 <h3 className="text-card-title mb-2">{s.title}</h3>

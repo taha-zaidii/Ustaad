@@ -5,12 +5,13 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { MapPin, Clock, Users, ArrowUpRight } from "lucide-react";
 import { jobs as seedJobs, type Job } from "./data";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function mapApiJob(row: any): Job {
   return {
     title: row.title ?? "Untitled job",
     category: row.category ?? "General",
-    categoryColor: row.categoryColor ?? "#C8553D",
+    categoryColor: row.categoryColor ?? "#FFA94D",
     location: row.location ?? "Pakistan",
     posted: row.postedTime ?? "recently",
     budget: row.budget ?? "PKR —",
@@ -26,29 +27,35 @@ function mapApiJob(row: any): Job {
 }
 
 function JobCard({ j, idx }: { j: Job; idx: number }) {
+  const { t } = useLanguage();
   return (
     <motion.article
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ delay: idx * 0.05, duration: 0.4 }}
-      className="group flex flex-col p-6 rounded-xl ring-soft transition-colors hover:ring-soft-bright"
-      style={{ background: "var(--bg-card)" }}
+      className="glass-card glass-edge group flex flex-col p-6"
     >
       <div className="flex items-center justify-between gap-3 mb-4">
-        <span className="chip chip-brand">{j.category}</span>
+        <span
+          className="chip"
+          style={{
+            background: j.categoryColor + "22",
+            color: j.categoryColor,
+            borderColor: j.categoryColor + "55",
+          }}
+        >
+          {j.category}
+        </span>
         {j.urgent && (
-          <span
-            className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.1em] font-mono"
-            style={{ color: "var(--brand)" }}
-          >
-            <span className="pulse-dot" aria-hidden="true" />
-            Urgent
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-[0.1em] font-semibold" style={{ color: "var(--brand)" }}>
+            <span className="live-pulse" aria-hidden="true" />
+            {t("home.jobs.urgent")}
           </span>
         )}
       </div>
 
-      <h3 className="text-card-title mb-2">{j.title}</h3>
+      <h3 className="text-card-title mb-2 clamp-2">{j.title}</h3>
       <p className="text-[14px] leading-relaxed clamp-2 mb-4 text-[color:var(--text-secondary)]">
         {j.description}
       </p>
@@ -70,27 +77,17 @@ function JobCard({ j, idx }: { j: Job; idx: number }) {
         <div>
           <div className="inline-flex items-center gap-1.5 text-[11.5px] mb-1 text-[color:var(--text-muted)]">
             <Users className="w-3.5 h-3.5" aria-hidden="true" />
-            {j.applicants} applied
+            {j.applicants} {t("home.jobs.applied")}
           </div>
-          <div
-            className="font-mono font-semibold text-[18px] tabular-nums"
-            style={{ color: "var(--text-primary)" }}
-          >
+          <div className="font-mono font-semibold text-[18px] tabular-nums text-[color:var(--text-primary)]">
             {j.budget}
             <span className="text-[11px] font-medium ml-1 text-[color:var(--text-muted)]">
-              {j.budgetType === "fixed" ? "fixed" : "/hr"}
+              {j.budgetType === "fixed" ? t("home.jobs.fixed") : t("home.jobs.hourly")}
             </span>
           </div>
         </div>
-        <Link
-          href="/sign-in"
-          className="inline-flex items-center gap-1 text-[13px] font-medium px-3.5 py-2 rounded-md transition-colors hover:bg-[color:var(--brand-soft)]"
-          style={{
-            color: "var(--brand)",
-            boxShadow: "inset 0 0 0 1px var(--brand)",
-          }}
-        >
-          Apply
+        <Link href="/sign-in" className="btn-glass">
+          {t("home.jobs.apply")}
           <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
       </div>
@@ -99,6 +96,7 @@ function JobCard({ j, idx }: { j: Job; idx: number }) {
 }
 
 export default function FeaturedJobs() {
+  const { t } = useLanguage();
   const [items, setItems] = useState<Job[]>(seedJobs.slice(0, 6));
 
   useEffect(() => {
@@ -110,9 +108,7 @@ export default function FeaturedJobs() {
         const data = await res.json();
         const rows: any[] = Array.isArray(data?.jobs) ? data.jobs : [];
         if (cancelled) return;
-        if (rows.length >= 1) {
-          setItems(rows.slice(0, 6).map(mapApiJob));
-        }
+        if (rows.length >= 1) setItems(rows.slice(0, 6).map(mapApiJob));
       } catch {
         /* keep seed */
       }
@@ -123,32 +119,24 @@ export default function FeaturedJobs() {
   }, []);
 
   return (
-    <section
-      className="border-y"
-      style={{
-        background: "var(--bg-elevated)",
-        borderColor: "var(--border)",
-      }}
-    >
-      <div className="mx-auto max-w-[1200px] px-5 lg:px-8 py-20 lg:py-28">
+    <section className="relative">
+      <div className="mx-auto max-w-[1240px] px-5 lg:px-8 py-20 lg:py-28">
         <div className="flex items-end justify-between flex-wrap gap-6 mb-10">
           <div className="max-w-2xl">
-            <span className="eyebrow">Open jobs</span>
-            <h2 className="mt-3 text-section">
-              Live briefs from real{" "}
-              <span className="text-editorial-italic" style={{ color: "var(--brand)" }}>
-                clients.
-              </span>
+            <span className="eyebrow eyebrow-bilingual">{t("home.jobs.eyebrow")}</span>
+            <h2 className="mt-4 text-section">
+              {t("home.jobs.title_a")}{" "}
+              <span className="text-grad-brand">{t("home.jobs.title_b")}</span>
             </h2>
             <p className="mt-4 text-[15px] leading-relaxed text-[color:var(--text-secondary)]">
-              Households and businesses across Pakistan posting work right now.
+              {t("home.jobs.desc")}
             </p>
           </div>
           <Link
             href="/browse-jobs"
             className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[color:var(--brand)] hover:underline underline-offset-4"
           >
-            See every open job
+            {t("home.jobs.see_all")}
             <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
           </Link>
         </div>

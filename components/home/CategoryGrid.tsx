@@ -5,19 +5,10 @@ import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { categories as seedCategories, type Category } from "./data";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-/**
- * CategoryGrid — restrained version of the old 3D-tilt card wall.
- *
- * The previous design tilted every card with cursor parallax, painted
- * a radial glow behind it, and rendered six categories per row at small
- * font sizes. This rewrite swaps for a clean 2x6 (or 3x4 on lg) grid of
- * flat-surface cards with subtle hover state. The Lucide icon is kept,
- * the colour is reduced to the brand accent (so the page doesn't read
- * like a paint store), and the job count is pulled live from the API
- * with the seed file as fallback.
- */
 export default function CategoryGrid() {
+  const { t, lang } = useLanguage();
   const [items, setItems] = useState<Category[]>(seedCategories);
 
   useEffect(() => {
@@ -51,18 +42,16 @@ export default function CategoryGrid() {
   }, []);
 
   return (
-    <section className="mx-auto max-w-[1200px] px-5 lg:px-8 py-20 lg:py-28">
+    <section className="mx-auto max-w-[1240px] px-5 lg:px-8 py-20 lg:py-28">
       <div className="flex items-end justify-between flex-wrap gap-6 mb-10">
         <div className="max-w-2xl">
-          <span className="eyebrow">Categories</span>
-          <h2 className="mt-3 text-section">
-            Twelve trades.{" "}
-            <span className="text-editorial-italic" style={{ color: "var(--brand)" }}>
-              One marketplace.
-            </span>
+          <span className="eyebrow eyebrow-bilingual">{t("home.cats.eyebrow")}</span>
+          <h2 className="mt-4 text-section">
+            {t("home.cats.title_a")}{" "}
+            <span className="text-grad-brand">{t("home.cats.title_b")}</span>
           </h2>
           <p className="mt-4 text-[15px] leading-relaxed text-[color:var(--text-secondary)]">
-            From electrical work to gardening — verified pros in every Pakistani city, a click away.
+            {t("home.cats.desc")}
           </p>
         </div>
 
@@ -70,7 +59,7 @@ export default function CategoryGrid() {
           href="/browse-jobs"
           className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[color:var(--brand)] hover:underline underline-offset-4"
         >
-          Browse all categories
+          {t("home.cats.browse_all")}
           <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
         </Link>
       </div>
@@ -84,18 +73,18 @@ export default function CategoryGrid() {
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ delay: i * 0.03, duration: 0.4 }}
+              transition={{ delay: i * 0.04, duration: 0.4 }}
             >
               <Link
                 href={`/browse-jobs?category=${encodeURIComponent(c.nameEn)}`}
-                className="group flex items-center gap-4 p-4 rounded-lg ring-soft transition-colors hover:ring-soft-bright"
-                style={{ background: "var(--bg-card)" }}
+                className="group glass-card flex items-center gap-4 p-4 sm:p-5"
               >
                 <span
-                  className="w-10 h-10 rounded-md grid place-items-center transition-colors"
+                  className="w-11 h-11 rounded-xl grid place-items-center shrink-0"
                   style={{
-                    background: "var(--brand-soft)",
-                    color: "var(--brand)",
+                    background: c.color + "22",
+                    color: c.color,
+                    boxShadow: `inset 0 1px 0 ${c.color}33`,
                   }}
                   aria-hidden="true"
                 >
@@ -105,8 +94,8 @@ export default function CategoryGrid() {
                   <span className="block text-[14.5px] font-semibold text-[color:var(--text-primary)] truncate">
                     {c.nameEn}
                   </span>
-                  <span className="block text-[12.5px] font-mono text-[color:var(--text-muted)] tabular-nums">
-                    {c.jobs.toLocaleString()} jobs
+                  <span className="block text-[12px] font-mono text-[color:var(--text-muted)] tabular-nums">
+                    {c.jobs.toLocaleString()} {t("home.cats.unit")}
                   </span>
                 </span>
                 <ArrowUpRight

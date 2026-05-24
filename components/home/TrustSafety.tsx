@@ -2,65 +2,44 @@
 
 import { motion } from "framer-motion";
 import { ShieldCheck, Lock, MessagesSquare, Award } from "lucide-react";
-
-const pillars = [
-  {
-    icon: ShieldCheck,
-    title: "Verified workers only",
-    desc: "CNIC verification, address check, and a skill test before any worker reaches the platform.",
-  },
-  {
-    icon: Lock,
-    title: "Escrow-held payments",
-    desc: "Your payment is held by Ustaad until the work is signed off — workers can't pull funds early.",
-  },
-  {
-    icon: MessagesSquare,
-    title: "24/7 dispute support",
-    desc: "WhatsApp, call, or chat — we respond within 30 minutes, in Roman Urdu or English.",
-  },
-  {
-    icon: Award,
-    title: "Quality guarantee",
-    desc: "Not happy with the work? Free re-do, or 100% refund — no questions asked.",
-  },
-];
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function TrustSafety() {
+  const { t } = useLanguage();
+  const pillars = [
+    { icon: ShieldCheck,    title: t("home.trust.p1_t"), desc: t("home.trust.p1_d"), tint: "accent" as const },
+    { icon: Lock,           title: t("home.trust.p2_t"), desc: t("home.trust.p2_d"), tint: "brand" as const },
+    { icon: MessagesSquare, title: t("home.trust.p3_t"), desc: t("home.trust.p3_d"), tint: "accent" as const },
+    { icon: Award,          title: t("home.trust.p4_t"), desc: t("home.trust.p4_d"), tint: "brand" as const },
+  ];
+
   return (
-    <section className="mx-auto max-w-[1200px] px-5 lg:px-8 py-20 lg:py-28">
+    <section className="mx-auto max-w-[1240px] px-5 lg:px-8 py-20 lg:py-28">
       <div className="grid lg:grid-cols-12 gap-10 items-start">
         <div className="lg:col-span-5 lg:sticky lg:top-32">
-          <span className="eyebrow">Trust & safety</span>
-          <h2 className="mt-3 text-section">
-            Your money and your time —{" "}
-            <span className="text-editorial-italic" style={{ color: "var(--brand)" }}>
-              both protected.
-            </span>
+          <span className="eyebrow eyebrow-bilingual">{t("home.trust.eyebrow")}</span>
+          <h2 className="mt-4 text-section">
+            {t("home.trust.title_a")}{" "}
+            <span className="text-grad-brand">{t("home.trust.title_b")}</span>
           </h2>
           <p className="mt-5 text-[15.5px] leading-relaxed text-[color:var(--text-secondary)]">
-            The hardest problem in Pakistan&apos;s informal labour market is
-            trust. Every transaction is transparent, every worker verified,
-            every dispute resolved — in Roman Urdu or English.
+            {t("home.trust.desc")}
           </p>
 
-          <div className="mt-7 inline-flex items-center gap-3 p-3 rounded-lg ring-soft" style={{ background: "var(--bg-card)" }}>
+          <div className="mt-7 inline-flex items-center gap-3 p-3.5 glass-card">
             <div
-              className="w-9 h-9 rounded-md grid place-items-center"
-              style={{
-                background: "var(--brand-soft)",
-                color: "var(--brand)",
-              }}
+              className="w-10 h-10 rounded-xl grid place-items-center"
+              style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
               aria-hidden="true"
             >
-              <Award className="w-[18px] h-[18px]" />
+              <Award className="w-5 h-5" />
             </div>
             <div className="leading-tight">
-              <div className="text-[12px] text-[color:var(--text-muted)] uppercase tracking-[0.1em]">
-                SECP registered
+              <div className="text-[11px] uppercase tracking-[0.1em] font-mono text-[color:var(--text-muted)]">
+                {t("home.trust.compliant_a")}
               </div>
-              <div className="text-[13.5px] font-semibold text-[color:var(--text-primary)]">
-                Pakistan compliant
+              <div className="text-[14px] font-semibold text-[color:var(--text-primary)]">
+                {t("home.trust.compliant_b")}
               </div>
             </div>
           </div>
@@ -69,6 +48,8 @@ export default function TrustSafety() {
         <div className="lg:col-span-7 grid sm:grid-cols-2 gap-4">
           {pillars.map((p, i) => {
             const Icon = p.icon;
+            const tintColor = p.tint === "brand" ? "var(--brand)" : "var(--accent)";
+            const tintSoft = p.tint === "brand" ? "var(--brand-soft)" : "var(--accent-soft)";
             return (
               <motion.div
                 key={p.title}
@@ -76,15 +57,11 @@ export default function TrustSafety() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ delay: i * 0.05, duration: 0.4 }}
-                className="rounded-xl p-6 ring-soft"
-                style={{ background: "var(--bg-card)" }}
+                className="glass-card p-6"
               >
                 <div
-                  className="w-10 h-10 rounded-md grid place-items-center mb-4"
-                  style={{
-                    background: "var(--brand-soft)",
-                    color: "var(--brand)",
-                  }}
+                  className="w-11 h-11 rounded-xl grid place-items-center mb-4"
+                  style={{ background: tintSoft, color: tintColor }}
                   aria-hidden="true"
                 >
                   <Icon className="w-5 h-5" />

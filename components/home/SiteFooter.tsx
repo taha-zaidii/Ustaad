@@ -10,79 +10,95 @@ import {
   Twitter,
   Youtube,
 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-const linkGroups = [
-  {
-    heading: "For workers",
-    links: [
-      { label: "Create profile",     href: "/sign-up" },
-      { label: "Browse jobs",        href: "/browse-jobs" },
-      { label: "Skill test",         href: "/sign-up" },
-      { label: "Payments & fees",    href: "/how-it-works" },
-    ],
-  },
-  {
-    heading: "For clients",
-    links: [
-      { label: "Post a job",         href: "/post-job" },
-      { label: "Find talent",        href: "/freelancers" },
-      { label: "Pricing",            href: "/how-it-works" },
-      { label: "Business plans",     href: "/contact" },
-    ],
-  },
-  {
-    heading: "Ustaad",
-    links: [
-      { label: "About us",           href: "/about" },
-      { label: "How it works",       href: "/how-it-works" },
-      { label: "Contact",            href: "/contact" },
-      { label: "Privacy policy",     href: "/privacy" },
-    ],
-  },
-  {
-    heading: "Help",
-    links: [
-      { label: "Help center",        href: "/contact" },
-      { label: "Trust & safety",     href: "/privacy" },
-      { label: "Sign in",            href: "/sign-in" },
-      { label: "Sign up",            href: "/sign-up" },
-    ],
-  },
-];
-
-// Real social profiles slot in once the brand pages exist. Until then
-// these render as disabled spans — no dead "#" anchors.
 const socials: { Icon: typeof Facebook; href: string | null; label: string }[] = [
-  { Icon: Facebook,  href: null, label: "Facebook"  },
+  { Icon: Facebook, href: null, label: "Facebook" },
   { Icon: Instagram, href: null, label: "Instagram" },
-  { Icon: Twitter,   href: null, label: "Twitter"   },
-  { Icon: Youtube,   href: null, label: "YouTube"   },
+  { Icon: Twitter, href: null, label: "Twitter" },
+  { Icon: Youtube, href: null, label: "YouTube" },
 ];
 
 export default function SiteFooter() {
+  const { t } = useLanguage();
+
+  const linkGroups = [
+    {
+      heading: t("footer.workers"),
+      links: [
+        { label: t("footer.create_profile"), href: "/sign-up" },
+        { label: t("footer.browse_jobs"), href: "/browse-jobs" },
+        { label: t("footer.skill_test"), href: "/sign-up" },
+        { label: t("footer.payments"), href: "/how-it-works" },
+      ],
+    },
+    {
+      heading: t("footer.clients"),
+      links: [
+        { label: t("footer.post_job"), href: "/post-job" },
+        { label: t("footer.find_talent"), href: "/freelancers" },
+        { label: t("footer.pricing"), href: "/how-it-works" },
+        { label: t("footer.business"), href: "/contact" },
+      ],
+    },
+    {
+      heading: t("footer.brand"),
+      links: [
+        { label: t("footer.about"), href: "/about" },
+        { label: t("footer.how"), href: "/how-it-works" },
+        { label: t("footer.contact"), href: "/contact" },
+        { label: t("footer.privacy"), href: "/privacy" },
+      ],
+    },
+    {
+      heading: t("footer.help"),
+      links: [
+        { label: t("footer.help_center"), href: "/contact" },
+        { label: t("footer.trust_safety"), href: "/privacy" },
+        { label: t("footer.sign_in"), href: "/sign-in" },
+        { label: t("footer.sign_up"), href: "/sign-up" },
+      ],
+    },
+  ];
+
   return (
     <footer
-      className="border-t"
+      className="relative border-t mt-16"
       style={{
         borderColor: "var(--border)",
-        background: "var(--bg-sunken)",
+        background:
+          "linear-gradient(180deg, transparent 0%, var(--bg-sunken) 100%)",
       }}
     >
-      <div className="mx-auto max-w-[1200px] px-5 lg:px-8 py-16">
+      <div className="mx-auto max-w-[1240px] px-5 lg:px-8 py-16">
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-4">
-            <div className="flex items-baseline gap-2 mb-4">
-              <span className="text-[22px] font-display text-[color:var(--text-primary)]">
-                Ustaad
+            <Link href="/" className="flex items-center gap-2.5 mb-5">
+              <span
+                className="w-9 h-9 rounded-[12px] grid place-items-center text-[15px] font-extrabold font-display"
+                style={{
+                  background: "var(--grad-brand)",
+                  color: "var(--text-inverse)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 18px -6px var(--brand-glow)",
+                }}
+              >
+                U
               </span>
-              <span className="text-[11px] uppercase tracking-[0.18em] font-mono text-[color:var(--text-muted)]">
-                PK
+              <span className="flex flex-col leading-none">
+                <span
+                  className="text-[20px] font-bold tracking-[-0.018em] font-display"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  Ustaad
+                </span>
+                <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[color:var(--text-muted)] mt-[3px]">
+                  PK · Workforce
+                </span>
               </span>
-            </div>
+            </Link>
             <p className="text-[14px] leading-relaxed mb-6 max-w-sm text-[color:var(--text-secondary)]">
-              Pakistan&apos;s workforce marketplace. Verified workers,
-              transparent pricing, AI-matched proposals — from Karachi to
-              Peshawar.
+              {t("footer.tagline")}
             </p>
 
             <div className="flex flex-col gap-2 text-[13px] text-[color:var(--text-secondary)]">
@@ -118,7 +134,7 @@ export default function SiteFooter() {
                     <li key={l.label}>
                       <Link
                         href={l.href}
-                        className="text-[14px] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors"
+                        className="text-[14px] text-[color:var(--text-secondary)] hover:text-[color:var(--brand)] transition-colors"
                       >
                         {l.label}
                       </Link>
@@ -135,7 +151,7 @@ export default function SiteFooter() {
           style={{ borderColor: "var(--border)" }}
         >
           <div className="text-[12.5px] text-[color:var(--text-muted)]">
-            © {new Date().getFullYear()} Ustaad Technologies (Pvt) Ltd · Made in Pakistan
+            © {new Date().getFullYear()} Ustaad Technologies (Pvt) Ltd · {t("footer.made_in")}
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -147,16 +163,16 @@ export default function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="w-9 h-9 rounded-md flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)] transition-colors ring-soft"
+                  className="w-9 h-9 rounded-full glass flex items-center justify-center hover:bg-[color:var(--glass-bright)] transition-colors"
                 >
                   <Icon className="w-4 h-4" aria-hidden="true" />
                 </a>
               ) : (
                 <span
                   key={label}
-                  aria-label={`${label} — coming soon`}
-                  title="Coming soon"
-                  className="w-9 h-9 rounded-md flex items-center justify-center opacity-40 cursor-not-allowed text-[color:var(--text-muted)] ring-soft"
+                  aria-label={`${label} — ${t("footer.coming_soon")}`}
+                  title={t("footer.coming_soon")}
+                  className="w-9 h-9 rounded-full glass flex items-center justify-center opacity-40 cursor-not-allowed text-[color:var(--text-muted)]"
                 >
                   <Icon className="w-4 h-4" aria-hidden="true" />
                 </span>
