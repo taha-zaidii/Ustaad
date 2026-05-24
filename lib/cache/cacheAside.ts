@@ -21,17 +21,40 @@ import { getRedis } from "./redis";
 
 const DEFAULT_TTL_SECONDS = 60;
 
+// In-process version memoization. The cache key includes a namespace
+// version so writes can invalidate the whole namespace in O(1) — but
+// fetching that version on every read doubles the Upstash round-trips.
+// Memoizing it per-Lambda-instance for a short TTL cuts the cache-hit
+// path back down to one Upstash request. The trade-off is up to
+// VERSION_MEMO_MS of staleness across Lambdas after a write; for a
+// jobs marketplace this is invisible to users.
+const VERSION_MEMO_MS = 3_000;
+const versionMemo = new Map<string, { v: string; expiresAt: number }>();
+
 async function getNamespaceVersion(ns: string): Promise<string> {
+  const now = Date.now();
+  const memo = versionMemo.get(ns);
+  if (memo && memo.expiresAt > now) return memo.v;
+
   const r = getRedis();
-  if (!r) return "0";
+  if (!r) {
+    versionMemo.set(ns, { v: "0", expiresAt: now + VERSION_MEMO_MS });
+    return "0";
+  }
+
   try {
     const key = `nsver:${ns}`;
     const cur = await r.get<string | number>(key);
-    if (cur !== null && cur !== undefined) return String(cur);
+    if (cur !== null && cur !== undefined) {
+      const v = String(cur);
+      versionMemo.set(ns, { v, expiresAt: now + VERSION_MEMO_MS });
+      return v;
+    }
     // Initialize with current timestamp so a brand-new namespace has a
     // stable, monotonically increasing baseline.
-    const init = String(Date.now());
+    const init = String(now);
     await r.set(key, init);
+    versionMemo.set(ns, { v: init, expiresAt: now + VERSION_MEMO_MS });
     return init;
   } catch {
     return "0";
@@ -39,10 +62,15 @@ async function getNamespaceVersion(ns: string): Promise<string> {
 }
 
 export async function bumpNamespace(ns: string): Promise<void> {
+  const newVer = String(Date.now());
+  // Update the local memo immediately so the writing instance sees the
+  // invalidation on its very next read. Other instances will catch up
+  // within VERSION_MEMO_MS.
+  versionMemo.set(ns, { v: newVer, expiresAt: Date.now() + VERSION_MEMO_MS });
   const r = getRedis();
   if (!r) return;
   try {
-    await r.set(`nsver:${ns}`, String(Date.now()));
+    await r.set(`nsver:${ns}`, newVer);
   } catch {
     /* fail open */
   }
