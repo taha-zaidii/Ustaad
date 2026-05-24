@@ -33,10 +33,9 @@ export const translations = {
   // Headline split: <line1> <brandWord> <lineEnd>
   // English:  "Whether home or business — Ustaad has you covered"
   // Roman-Urdu: "Ghar ka Kaam Ho Ya Business — Ustaad Hai!"
-  "hero.line1":        { en: "Whether home or",  ur: "Ghar ka Kaam Ho Ya" },
-  "hero.line2_pre":    { en: "business with",    ur: "Business —" },
+  "hero.line1":        { en: "Whether home or business —",  ur: "Ghar ka Kaam Ho Ya Business —" },
   "hero.line2_brand":  { en: "Ustaad",           ur: "Ustaad" },
-  "hero.line2_post":   { en: "you’re covered.",  ur: "Hai!" },
+  "hero.line2_post":   { en: "has you covered.", ur: "Hai!" },
   "hero.heading1":     { en: "Find Verified",    ur: "Verified" },
   "hero.heading2":     { en: "Skilled Workers",  ur: "Kaarigar Dhundo" },
   "hero.heading3":     { en: "Instantly",        ur: "Fauran" },
