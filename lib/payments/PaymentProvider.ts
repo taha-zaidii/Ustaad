@@ -95,11 +95,10 @@ export class StripeProvider implements PaymentProvider {
   }
 
   private async client() {
-    // Optional dependency: the project may not have `stripe` in
-    // package.json yet. The dynamic import works at runtime once
-    // `npm install stripe` is run; until then the factory routes
-    // 'stripe' to MockProvider so this path is never reached.
-    // @ts-expect-error optional peer dep, resolved at runtime
+    // Lazy-loaded so the Stripe SDK only enters the bundle when this
+    // path is actually exercised. The factory routes 'stripe' to
+    // MockProvider when STRIPE_SECRET_KEY is unset, so production
+    // bundles that never set the key still avoid the cold-start cost.
     const Stripe = (await import("stripe")).default;
     return new Stripe(this.secretKey);
   }
