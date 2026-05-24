@@ -1,23 +1,25 @@
 /**
  * /api/jobs/[id]/matches
  *
- * Returns a ranked list of freelancer candidates for a given job, using
- * the hybrid AI recommender (TF-IDF + cosine + collaborative-filtering
- * signal). Falls back to a SQL-driven ranking when the AI service is
- * unreachable so the page never breaks.
+ * Returns a ranked list of freelancer candidates for a given job. The
+ * route is intentionally thin: it loads the job + candidate set from
+ * Postgres and hands them to the MatchingFacade, which picks the best
+ * available engine (remote scikit-learn → local Strategy → SQL
+ * heuristic) and returns a uniform result shape.
  *
- * Only the client who owns the job (or any authenticated user, since
- * this is read-only and contains no PII beyond public profile data)
- * can call this.
+ * Only authenticated users can call this. Profile data returned is
+ * already public (name, location, rating, skills) — no PII leaks.
  *
  * SRS: REQ-3.2 (matching).
- * Pattern: Adapter (lib/ai/client) wrapping a remote scikit-learn
- * service so the route stays oblivious to the underlying ML model.
+ * Patterns:
+ *   - Facade   (lib/patterns/MatchingFacade) — multi-engine orchestration
+ *   - Adapter  (lib/ai/client)               — wraps remote FastAPI
+ *   - Strategy (lib/patterns/MatchingStrategy) — in-process ranking
  */
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import pool from "@/lib/db";
-import { matchHybrid, strategyFor } from "@/lib/ai/client";
+import { MatchingFacade } from "@/lib/patterns/MatchingFacade";
 
 interface CandidateRow {
   id: string;
@@ -110,102 +112,59 @@ export async function GET(
     }
 
     const candidates = candResult.rows.map((c) => ({
-      id: String(c.clerk_id || c.id),
-      full_name: c.full_name || undefined,
-      bio: c.bio || undefined,
+      id: String(c.id),
+      clerkId: c.clerk_id,
+      fullName: c.full_name,
+      bio: c.bio,
       skills: (c.skills || []).filter(Boolean),
-      location: c.location || undefined,
-      rating: c.rating ? Number(c.rating) : undefined,
+      location: c.location,
+      rating: c.rating ? Number(c.rating) : 0,
     }));
 
-    const ai = await matchHybrid(
-      {
+    const facade = new MatchingFacade();
+    const result = await facade.rank({
+      job: {
         id: String(job.id),
         title: job.title || job.category_name || "job",
         description: job.description || undefined,
-        required_skills: (job.required_skills || []).filter(Boolean),
+        category: job.category_name || undefined,
         location: job.location || undefined,
+        requiredSkills: (job.required_skills || []).filter(Boolean),
+        clientClerkId: job.client_clerk_id,
       },
       candidates,
-      job.client_clerk_id || null,
-      topK
-    );
+      topK,
+    });
 
-    const byClerkId = new Map(
+    const byKey = new Map(
       candResult.rows.map((c) => [String(c.clerk_id || c.id), c])
     );
 
-    if (ai && ai.matches.length > 0) {
-      const matches = ai.matches
-        .map((m) => {
-          const row = byClerkId.get(m.freelancer_id);
-          if (!row) return null;
-          return {
-            freelancer: {
-              id: row.id,
-              name: row.full_name,
-              location: row.location,
-              hourly_rate: row.hourly_rate,
-              rating: Number(row.rating).toFixed(1),
-              review_count: Number(row.review_count) || 0,
-              skills: (row.skills || []).filter(Boolean),
-            },
-            score: Math.round(m.score * 100),
-            rank: m.rank,
-            explanation: m.explanation,
-          };
-        })
-        .filter((m): m is NonNullable<typeof m> => m !== null);
-
-      return NextResponse.json({
-        matches,
-        engine: "ai-service",
-        strategy: ai.strategy,
-      });
-    }
-
-    // Fallback: SQL ranking by skill overlap + location + rating.
-    const requiredSkills = (job.required_skills || [])
-      .map((s) => s.toLowerCase())
-      .filter(Boolean);
-    const jobLoc = (job.location || "").trim().toLowerCase();
-
-    const scored = candResult.rows
-      .map((c) => {
-        const skills = (c.skills || []).map((s) => s.toLowerCase());
-        const overlap =
-          requiredSkills.length > 0
-            ? requiredSkills.filter((s) => skills.includes(s)).length /
-              requiredSkills.length
-            : 0;
-        const locHit =
-          jobLoc && c.location && c.location.trim().toLowerCase() === jobLoc
-            ? 1
-            : 0;
-        const rating = Math.min(5, Number(c.rating) || 0) / 5;
-        const score = 0.5 * overlap + 0.25 * locHit + 0.25 * rating;
-        return { row: c, score };
+    const matches = result.matches
+      .map((m) => {
+        const row = byKey.get(m.freelancerId);
+        if (!row) return null;
+        return {
+          freelancer: {
+            id: row.id,
+            name: row.full_name,
+            location: row.location,
+            hourly_rate: row.hourly_rate,
+            rating: Number(row.rating).toFixed(1),
+            review_count: Number(row.review_count) || 0,
+            skills: (row.skills || []).filter(Boolean),
+          },
+          score: m.score,
+          rank: m.rank,
+          explanation: m.explanation,
+        };
       })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK);
+      .filter((m): m is NonNullable<typeof m> => m !== null);
 
     return NextResponse.json({
-      matches: scored.map((s, i) => ({
-        freelancer: {
-          id: s.row.id,
-          name: s.row.full_name,
-          location: s.row.location,
-          hourly_rate: s.row.hourly_rate,
-          rating: Number(s.row.rating).toFixed(1),
-          review_count: Number(s.row.review_count) || 0,
-          skills: (s.row.skills || []).filter(Boolean),
-        },
-        score: Math.round(s.score * 100),
-        rank: i + 1,
-        explanation: {},
-      })),
-      engine: "local-heuristic",
-      strategy: strategyFor(),
+      matches,
+      engine: result.engine,
+      strategy: result.strategy,
     });
   } catch (error) {
     console.error("[/api/jobs/[id]/matches] error:", error);
