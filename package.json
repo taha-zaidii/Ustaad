@@ -12,6 +12,7 @@
     "test:coverage": "jest --coverage",
     "test:integration": "USTAAD_RUN_INTEGRATION=1 jest __tests__/integration",
     "db:seed": "node scripts/seed-demo-data.js",
+    "db:migrate": "node scripts/db-migrate.js",
     "bench:p95": "node scripts/p95-benchmark.js"
   },
   "dependencies": {

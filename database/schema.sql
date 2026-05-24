@@ -287,6 +287,56 @@ CREATE TABLE IF NOT EXISTS public.portfolio (
 CREATE INDEX IF NOT EXISTS portfolio_profile_idx ON public.portfolio (profile_id);
 
 
+-- 3.13 PAYMENTS — escrow lifecycle (held → released | refunded | cancelled).
+--      Funded by the client on proposal acceptance and released on
+--      completion. amount_minor is the smallest currency unit (paisa for
+--      PKR, cents for USD) stored as an integer to avoid rounding bugs.
+--      Referenced by app/api/payments/**/route.ts and lib/payments/*.
+DO $$ BEGIN
+  CREATE TYPE payment_status_enum AS ENUM ('held', 'released', 'refunded', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE payment_provider_enum AS ENUM ('stripe', 'easypaisa', 'jazzcash', 'mock');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS public.payments (
+  id            UUID                   PRIMARY KEY DEFAULT gen_random_uuid(),
+  job_id        UUID                   NOT NULL REFERENCES public.jobs(id)      ON DELETE CASCADE,
+  client_id     UUID                   NOT NULL REFERENCES public.profiles(id)  ON DELETE RESTRICT,
+  freelancer_id UUID                   NOT NULL REFERENCES public.profiles(id)  ON DELETE RESTRICT,
+  proposal_id   UUID                            REFERENCES public.proposals(id) ON DELETE SET NULL,
+
+  amount_minor  BIGINT                 NOT NULL CHECK (amount_minor > 0),
+  currency      CHAR(3)                NOT NULL DEFAULT 'PKR',
+
+  provider      payment_provider_enum  NOT NULL,
+  provider_ref  TEXT,
+  status        payment_status_enum    NOT NULL DEFAULT 'held',
+
+  held_at       TIMESTAMPTZ            NOT NULL DEFAULT NOW(),
+  released_at   TIMESTAMPTZ,
+  refunded_at   TIMESTAMPTZ,
+  cancelled_at  TIMESTAMPTZ,
+  note          TEXT,
+  metadata      JSONB                  NOT NULL DEFAULT '{}'::jsonb,
+  created_at    TIMESTAMPTZ            NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ            NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_job_id        ON public.payments (job_id);
+CREATE INDEX IF NOT EXISTS idx_payments_client_id     ON public.payments (client_id);
+CREATE INDEX IF NOT EXISTS idx_payments_freelancer_id ON public.payments (freelancer_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status        ON public.payments (status);
+CREATE INDEX IF NOT EXISTS idx_payments_provider_ref  ON public.payments (provider_ref)
+  WHERE provider_ref IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_payments_touch ON public.payments;
+CREATE TRIGGER trg_payments_touch
+  BEFORE UPDATE ON public.payments
+  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
 -- ── 4. DENORMALIZATION TRIGGERS ──────────────────────────────────────────────
 -- Keep jobs.proposals_count and profiles.review_count / avg_rating in sync
 -- so list-view queries don't have to aggregate on every render.
