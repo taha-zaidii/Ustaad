@@ -8,7 +8,6 @@ import {
   ArrowRight,
   ArrowLeftRight,
   LogOut,
-  Languages,
 } from "lucide-react";
 import Link from "next/link";
 import UserMenu from "./UserMenu";
@@ -16,16 +15,14 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth, useClerk } from "@clerk/nextjs";
 
 /**
- * Navbar — calm, sticky, accessible.
+ * Navbar — Liquid Glass header with first-class bilingual switch.
  *
- * Design notes
- *   - One row of content. No big logo flourishes, no scrolling progress bar
- *     to flicker on every scroll. The bar only adds a soft border + subtle
- *     surface once the user scrolls past the hero.
- *   - Brand mark = wordmark, not a coloured square + Beta pill.
- *   - Language toggle is a real button with both labels visible so the
- *     user can see which language they're switching to.
- *   - Mobile drawer is a vertical column with proper focus order.
+ *   - Transparent until scroll, then becomes a translucent glass bar.
+ *   - Brand mark = "U" tile (saffron gradient) + wordmark.
+ *   - Language pill ALWAYS shows both labels so the user can see the
+ *     state and the target language at the same time.
+ *   - Primary CTA is a saffron pill — the single biggest action.
+ *   - Mobile drawer is its own glass surface (not a transparent flyout).
  */
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -64,39 +61,50 @@ export default function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 transition-colors"
+      className="sticky top-0 z-50 transition-[background,backdrop-filter,border-color] duration-300"
       style={{
-        background: scrolled
-          ? "color-mix(in oklab, var(--bg) 88%, transparent)"
-          : "transparent",
-        backdropFilter: scrolled ? "blur(12px)" : undefined,
-        WebkitBackdropFilter: scrolled ? "blur(12px)" : undefined,
+        background: scrolled ? "color-mix(in oklab, var(--bg) 70%, transparent)" : "transparent",
+        backdropFilter: scrolled ? "blur(20px) saturate(160%)" : undefined,
+        WebkitBackdropFilter: scrolled ? "blur(20px) saturate(160%)" : undefined,
         borderBottom: `1px solid ${scrolled ? "var(--border)" : "transparent"}`,
       }}
     >
-      <nav className="mx-auto max-w-[1200px] px-5 lg:px-8 h-[68px] flex items-center justify-between gap-6">
+      <nav className="mx-auto max-w-[1240px] px-5 lg:px-8 h-[72px] flex items-center justify-between gap-6">
         <Link
           href="/"
           aria-label="Ustaad — home"
-          className="flex items-baseline gap-2"
+          className="flex items-center gap-2.5 group"
         >
           <span
-            className="text-[22px] leading-none font-display"
-            style={{ color: "var(--text-primary)" }}
+            className="relative w-9 h-9 rounded-[12px] grid place-items-center text-[15px] font-extrabold font-display"
+            style={{
+              background: "var(--grad-brand)",
+              color: "var(--text-inverse)",
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 18px -6px var(--brand-glow)",
+            }}
           >
-            Ustaad
+            U
           </span>
-          <span className="text-[11px] uppercase tracking-[0.18em] font-mono text-[color:var(--text-muted)]">
-            PK
+          <span className="flex flex-col leading-none">
+            <span
+              className="text-[20px] font-bold tracking-[-0.018em] font-display"
+              style={{ color: "var(--text-primary)" }}
+            >
+              Ustaad
+            </span>
+            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[color:var(--text-muted)] mt-[3px]">
+              PK · Workforce
+            </span>
           </span>
         </Link>
 
-        <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
+        <div className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
           {navLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="px-3 py-2 text-[14px] font-medium rounded-md text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] transition-colors"
+              className="px-3.5 py-2 text-[14px] font-medium rounded-full text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--glass-bright)] transition-colors"
             >
               {l.label}
             </Link>
@@ -104,22 +112,53 @@ export default function Navbar() {
         </div>
 
         <div className="hidden lg:flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setLang(lang === "en" ? "ur" : "en")}
-            aria-label={`Switch language to ${lang === "en" ? "Urdu" : "English"}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] transition-colors"
+          {/* Bilingual language pill — always shows both labels */}
+          <div
+            role="group"
+            aria-label="Language"
+            className="glass-pill inline-flex items-center p-1 text-[12.5px] font-medium"
           >
-            <Languages className="w-3.5 h-3.5" aria-hidden="true" />
-            {lang === "en" ? "اردو" : "English"}
-          </button>
+            <button
+              type="button"
+              onClick={() => setLang("en")}
+              aria-pressed={lang === "en"}
+              className={`px-3 py-1 rounded-full transition-colors ${
+                lang === "en"
+                  ? "text-[color:var(--text-inverse)]"
+                  : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
+              }`}
+              style={
+                lang === "en"
+                  ? { background: "var(--grad-brand)" }
+                  : undefined
+              }
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang("ur")}
+              aria-pressed={lang === "ur"}
+              className={`px-3 py-1 rounded-full transition-colors ${
+                lang === "ur"
+                  ? "text-[color:var(--text-inverse)]"
+                  : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
+              }`}
+              style={
+                lang === "ur"
+                  ? { background: "var(--grad-brand)" }
+                  : undefined
+              }
+            >
+              اردو
+            </button>
+          </div>
 
           {isSignedIn ? (
             <>
               <Link
                 href="/post-job"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[14px] font-semibold text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
-                style={{ background: "var(--brand)" }}
+                className="btn-brand"
               >
                 {t("nav.post_job")}
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -136,8 +175,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/sign-up"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[14px] font-semibold text-[color:var(--text-inverse)] transition-opacity hover:opacity-90"
-                style={{ background: "var(--brand)" }}
+                className="btn-brand"
               >
                 {t("nav.sign_up")}
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -150,30 +188,22 @@ export default function Navbar() {
           type="button"
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
-          className="lg:hidden p-2 -mr-2 rounded-md hover:bg-[color:var(--bg-elevated)]"
+          className="lg:hidden p-2 -mr-2 rounded-md text-[color:var(--text-primary)] hover:bg-[color:var(--glass-bright)]"
           onClick={() => setOpen((s) => !s)}
         >
-          {open ? (
-            <X className="w-5 h-5" aria-hidden="true" />
-          ) : (
-            <Menu className="w-5 h-5" aria-hidden="true" />
-          )}
+          {open ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
         </button>
       </nav>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            id="mobile-menu"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-            className="lg:hidden overflow-hidden border-t"
-            style={{
-              borderColor: "var(--border)",
-              background: "var(--bg)",
-            }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+            className="lg:hidden overflow-hidden border-t glass"
+            style={{ borderColor: "var(--border)" }}
           >
             <div className="px-5 py-4 flex flex-col gap-1">
               {navLinks.map((l) => (
@@ -181,7 +211,7 @@ export default function Navbar() {
                   key={l.href}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="block px-3 py-3 rounded-md text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)]"
+                  className="block px-3 py-3 rounded-lg text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-bright)]"
                 >
                   {l.label}
                 </Link>
@@ -189,44 +219,71 @@ export default function Navbar() {
 
               <div className="hairline my-2" />
 
-              <button
-                type="button"
-                onClick={() => setLang(lang === "en" ? "ur" : "en")}
-                className="flex items-center gap-2 px-3 py-3 text-left text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] rounded-md"
-              >
-                <Languages
-                  className="w-4 h-4"
-                  style={{ color: "var(--brand)" }}
-                  aria-hidden="true"
-                />
-                {lang === "en" ? "اردو" : "English"}
-              </button>
+              {/* Mobile language switch — large bilingual pill */}
+              <div className="px-3 pt-1">
+                <div
+                  role="group"
+                  aria-label="Language"
+                  className="glass-pill inline-flex items-center p-1 text-[13px] font-medium w-full max-w-xs"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setLang("en")}
+                    aria-pressed={lang === "en"}
+                    className={`flex-1 px-4 py-2 rounded-full transition-colors ${
+                      lang === "en"
+                        ? "text-[color:var(--text-inverse)]"
+                        : "text-[color:var(--text-secondary)]"
+                    }`}
+                    style={
+                      lang === "en"
+                        ? { background: "var(--grad-brand)" }
+                        : undefined
+                    }
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLang("ur")}
+                    aria-pressed={lang === "ur"}
+                    className={`flex-1 px-4 py-2 rounded-full transition-colors ${
+                      lang === "ur"
+                        ? "text-[color:var(--text-inverse)]"
+                        : "text-[color:var(--text-secondary)]"
+                    }`}
+                    style={
+                      lang === "ur"
+                        ? { background: "var(--grad-brand)" }
+                        : undefined
+                    }
+                  >
+                    اردو · Roman Urdu
+                  </button>
+                </div>
+              </div>
 
               {isSignedIn ? (
                 <>
                   <Link
                     href="/dashboard"
                     onClick={() => setOpen(false)}
-                    className="px-3 py-3 rounded-md text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)]"
+                    className="px-3 py-3 rounded-lg text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-bright)]"
                   >
                     {t("nav.dashboard")}
                   </Link>
                   <button
                     type="button"
                     onClick={handleMobileSwitchRole}
-                    className="flex items-center gap-2 px-3 py-3 text-left text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)] rounded-md"
+                    className="flex items-center gap-2 px-3 py-3 text-left text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-bright)] rounded-lg"
                   >
-                    <ArrowLeftRight
-                      className="w-4 h-4"
-                      style={{ color: "var(--brand)" }}
-                      aria-hidden="true"
-                    />
+                    <ArrowLeftRight className="w-4 h-4" style={{ color: "var(--brand)" }} aria-hidden="true" />
                     {t("nav.switch_to_freelancer")}
                   </button>
                   <button
                     type="button"
                     onClick={handleMobileSignOut}
-                    className="flex items-center gap-2 px-3 py-3 text-left text-[15px] rounded-md hover:bg-[color:var(--error-soft)]"
+                    className="flex items-center gap-2 px-3 py-3 text-left text-[15px] rounded-lg"
                     style={{ color: "var(--error)" }}
                   >
                     <LogOut className="w-4 h-4" aria-hidden="true" />
@@ -235,8 +292,7 @@ export default function Navbar() {
                   <Link
                     href="/post-job"
                     onClick={() => setOpen(false)}
-                    className="mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md text-[15px] font-semibold text-[color:var(--text-inverse)]"
-                    style={{ background: "var(--brand)" }}
+                    className="btn-brand mt-2 justify-center"
                   >
                     {t("nav.post_job")}
                     <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -247,15 +303,14 @@ export default function Navbar() {
                   <Link
                     href="/sign-in"
                     onClick={() => setOpen(false)}
-                    className="px-3 py-3 rounded-md text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-elevated)]"
+                    className="px-3 py-3 rounded-lg text-[15px] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-bright)]"
                   >
                     {t("nav.sign_in")}
                   </Link>
                   <Link
                     href="/sign-up"
                     onClick={() => setOpen(false)}
-                    className="mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md text-[15px] font-semibold text-[color:var(--text-inverse)]"
-                    style={{ background: "var(--brand)" }}
+                    className="btn-brand mt-2 justify-center"
                   >
                     {t("nav.sign_up")}
                     <ArrowRight className="w-4 h-4" aria-hidden="true" />
