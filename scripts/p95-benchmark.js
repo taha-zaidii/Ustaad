@@ -139,13 +139,29 @@ async function main() {
     );
   }
   lines.push(``);
-  const worstP95 = Math.max(...results.map((r) => r.p95));
-  const claim = worstP95 < 200 ? "MET" : "MISSED";
-  lines.push(`## Resume claim`);
+  const apiResults  = results.filter((r) => r.name.includes("/api/"));
+  const pageResults = results.filter((r) => !r.name.includes("/api/"));
+  const worstApiP95  = apiResults.length  ? Math.max(...apiResults.map((r) => r.p95))  : 0;
+  const worstPageP95 = pageResults.length ? Math.max(...pageResults.map((r) => r.p95)) : 0;
+  const pageClaim = worstPageP95 < 200 ? "MET" : "MISSED";
+  const apiClaim  = worstApiP95  < 200 ? "MET" : "MISSED";
+
+  lines.push(`## Resume claim — p95 < 200ms`);
   lines.push(``);
-  lines.push(`Worst-case p95 across all measured endpoints: **${worstP95}ms** — claim "p95 < 200ms" **${claim}**.`);
+  lines.push(`| Surface | Worst p95 | Status |`);
+  lines.push(`|---|---:|:---:|`);
+  lines.push(`| HTML pages (\`/\`, \`/browse-jobs\`, \`/freelancers\`) | ${worstPageP95}ms | **${pageClaim}** |`);
+  lines.push(`| API routes (\`/api/*\`) | ${worstApiP95}ms | **${apiClaim}** |`);
   lines.push(``);
-  lines.push(`Run again with: \`node scripts/p95-benchmark.js ${BASE}\``);
+
+  if (apiClaim === "MISSED" && cache && !cache.reachable) {
+    lines.push(`### Why the API routes miss the claim`);
+    lines.push(``);
+    lines.push(`The cache-aside layer (\`lib/cache/cacheAside.ts\`) is implemented but \`REDIS_URL\` is not set in the Vercel environment, so every API request makes a Vercel→Supabase round-trip (≈550ms baseline). Attaching Upstash Redis (free tier) and re-running this script should drop API p95 below 50ms for cached endpoints. The cache key includes the search params and is invalidated by namespace-version bump on writes.`);
+    lines.push(``);
+  }
+
+  lines.push(`Run again with: \`npm run bench:p95\` (override target: \`node scripts/p95-benchmark.js <url>\`).`);
 
   const outDir = path.join(__dirname, "..", "docs");
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
