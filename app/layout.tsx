@@ -4,14 +4,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import {
+  Inter,
+  Outfit,
+  Instrument_Serif,
+  JetBrains_Mono,
+} from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
-// Display — a quiet serif. Used for headings only; doesn't fight body copy.
-const instrumentSerif = Instrument_Serif({
+// Display — geometric + confident, warm at heavy weights. Used for h1/h2 and
+// any oversized number. Reads well on devices with limited rendering budget.
+const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-display",
   display: "swap",
 });
@@ -24,7 +29,16 @@ const inter = Inter({
   display: "swap",
 });
 
-// Mono — numbers, code, monospace UI bits.
+// Editorial italic — only used for the rare brand-word accent.
+const instrument = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["italic"],
+  variable: "--font-editorial",
+  display: "swap",
+});
+
+// Monospace — numbers, code, chip metadata, ticker rows.
 const mono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
@@ -33,9 +47,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ustaad — Verified workers and skilled professionals across Pakistan",
+  title: "Ustaad — Pakistan's verified workforce marketplace",
   description:
-    "Hire verified electricians, plumbers, AC technicians, carpenters and other skilled trades across 50+ Pakistani cities. Transparent pricing, AI-matched proposals, escrow-ready payments.",
+    "Hire verified electricians, plumbers, AC technicians, carpenters and other skilled trades across 50+ Pakistani cities. AI-matched proposals, escrow-ready payments, bilingual support.",
   keywords: [
     "Ustaad",
     "Pakistan skilled labour",
@@ -54,7 +68,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html
         lang="en"
-        className={`${instrumentSerif.variable} ${inter.variable} ${mono.variable}`}
+        className={`${outfit.variable} ${inter.variable} ${instrument.variable} ${mono.variable}`}
       >
         <body className="antialiased">
           <LanguageProvider>
