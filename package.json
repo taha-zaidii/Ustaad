@@ -11,7 +11,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:integration": "USTAAD_RUN_INTEGRATION=1 jest __tests__/integration",
-    "db:seed": "node scripts/seed-demo-data.js"
+    "db:seed": "node scripts/seed-demo-data.js",
+    "bench:p95": "node scripts/p95-benchmark.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.4",

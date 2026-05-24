@@ -1,3 +1,15 @@
+---
+title: Ustaad AI Matching
+emoji: 🛠️
+colorFrom: yellow
+colorTo: green
+sdk: docker
+app_port: 8000
+pinned: false
+license: mit
+short_description: FastAPI matching engine — TF-IDF + matrix factorization
+---
+
 # Ustaad — AI Matching Service
 
 FastAPI microservice that powers intelligent freelancer matching for the
@@ -102,12 +114,50 @@ pytest -q
 
 ## Deployment
 
-`Dockerfile` is provided. Recommended platforms: Railway, Render, Fly.
-After deploying, set `AI_MATCHING_URL` and `AI_SERVICE_TOKEN` in the
-Next.js app's environment so `/api/freelancers/match` proxies to this
-service. If the service is unreachable, the Next.js route falls back
-to the WeightedScoreMatching strategy so user-facing behavior never
-breaks.
+`Dockerfile` is provided. The frontmatter at the top of this README
+makes the directory drop-in deployable to Hugging Face Spaces (free,
+no card).
+
+### Hugging Face Spaces (recommended, free)
+
+```bash
+# 1. Create a new Space at https://huggingface.co/new-space
+#    SDK: Docker · Visibility: Public · Hardware: CPU basic (free)
+
+# 2. Set a Space secret named AI_SERVICE_TOKEN
+#    (Settings → Variables and secrets → New secret).
+#    Use the value of `openssl rand -hex 32`.
+
+# 3. Push only the ai-service/ contents to the Space's git remote:
+cd ai-service
+git init && git add . && git commit -m "initial deploy"
+git remote add space https://huggingface.co/spaces/<your-user>/<space-name>
+git push space main
+```
+
+The Space will build the Dockerfile, expose port 8000, and serve at
+`https://<your-user>-<space-name>.hf.space`.
+
+### Wiring to Next.js
+
+After the Space is live, set these in Vercel → Project Settings →
+Environment Variables:
+
+```
+AI_MATCHING_URL=https://<your-user>-<space-name>.hf.space
+AI_SERVICE_TOKEN=<same value you set as the Space secret>
+```
+
+Redeploy. The Next.js route at `/api/jobs/[id]/matches` will now proxy
+to the Space. If the Space is unreachable (free tier cold-starts past
+the 800ms client timeout, or down), the route falls back to the
+`WeightedScoreMatching` strategy so user-facing behavior never breaks.
+
+### Other platforms
+
+The same Dockerfile works on Render free, Fly.io free, or Railway —
+just point those at the `ai-service/` directory and set the same two
+env vars.
 
 ## Layout
 
