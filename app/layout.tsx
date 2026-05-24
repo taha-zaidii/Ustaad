@@ -11,6 +11,7 @@ import {
   JetBrains_Mono,
 } from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { Analytics } from "@vercel/analytics/next";
 
 // Display — geometric + confident, warm at heavy weights. Used for h1/h2 and
 // any oversized number. Reads well on devices with limited rendering budget.
@@ -78,6 +79,7 @@ export default function RootLayout({
               <Sonner />
             </TooltipProvider>
           </LanguageProvider>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
